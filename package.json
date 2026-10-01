@@ -1,0 +1,51 @@
+{
+  "name": "@zebbern/hacktricks-mcp",
+  "version": "0.1.0",
+  "description": "MCP server giving AI agents fast full-text search and section-level retrieval over the HackTricks security wiki. Ships with a pre-built FTS5 index, synced with upstream every 3 days.",
+  "type": "module",
+  "bin": {
+    "hacktricks-mcp": "dist/server.js"
+  },
+  "files": [
+    "dist",
+    "data/hacktricks.db",
+    "data/toc.json",
+    "data/meta.json"
+  ],
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "sync": "tsx scripts/sync.ts",
+    "eval": "tsx scripts/eval.ts",
+    "smoke": "tsx scripts/smoke.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "hacktricks",
+    "pentesting",
+    "red-team",
+    "security",
+    "ai-agents"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zebbern/hacktricks-mcp.git"
+  },
+  "homepage": "https://github.com/zebbern/hacktricks-mcp",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "tar": "^7.5.22",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.9.3"
+  }
+}

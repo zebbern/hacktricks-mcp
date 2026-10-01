@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "data/**"
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Build index from upstream
+        run: npm run sync
+
+      - name: Search quality eval
+        run: npm run eval
+
+      - name: Smoke-test MCP server over stdio
+        run: npm run smoke

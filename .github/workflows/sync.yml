@@ -1,0 +1,52 @@
+name: Sync upstream HackTricks
+
+on:
+  schedule:
+    # Every 3rd day at 04:17 UTC (off-peak minute)
+    - cron: "17 4 */3 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Sync upstream and rebuild index
+        run: npm run sync
+
+      - name: Verify search quality
+        run: npm run eval
+
+      - name: Commit updated index
+        run: |
+          if git diff --quiet -- data/; then
+            echo "Index unchanged, nothing to commit"
+            exit 0
+          fi
+          SHA=$(node -p "require('./data/meta.json').upstreamSha.slice(0,7)")
+          git config user.name "hacktricks-mcp-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git commit -m "chore: sync index with HackTricks upstream ${SHA}"
+          git push
+
+      - name: Tag release
+        if: success()
+        run: |
+          SHA=$(node -p "require('./data/meta.json').upstreamSha.slice(0,7)")
+          TAG="index-$(date +%Y.%m.%d)-${SHA}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then exit 0; fi
+          git tag "$TAG"
+          git push origin "$TAG"
