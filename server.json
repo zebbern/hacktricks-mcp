@@ -1,0 +1,20 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-10-17/server.schema.json",
+  "name": "io.github.zebbern/hacktricks-mcp",
+  "description": "Full-text search and section-level retrieval over the HackTricks offensive-security wiki. Pre-built FTS5 index synced with upstream every 3 days; fully offline at query time.",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/zebbern/hacktricks-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@zebbern/hacktricks-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}
