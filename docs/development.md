@@ -63,7 +63,7 @@ npm version patch   # or minor / major
 git push --follow-tags
 ```
 
-The `release.yml` workflow then: rebuilds and quality-gates the index, creates the GitHub Release with the index assets, publishes to npm via OIDC trusted publishing (no `NPM_TOKEN` anywhere), and publishes the updated `server.json` to the official MCP registry via GitHub OIDC.
+The `release.yml` workflow then: rebuilds and quality-gates the index, creates the GitHub Release with the index assets, and publishes to npm via OIDC trusted publishing (no `NPM_TOKEN` anywhere). MCP registry publishing is intentionally local, see [agents.md](agents.md#mcp-registry).
 
 One-time prerequisites (already done for this repo): the first publish was manual (`npm publish --access public`), and the trusted publisher is configured on npmjs.com for `zebbern/hacktricks-mcp` + `release.yml`.
 

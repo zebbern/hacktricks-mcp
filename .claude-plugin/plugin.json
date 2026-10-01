@@ -1,0 +1,18 @@
+{
+  "name": "hacktricks",
+  "version": "0.1.5",
+  "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki, synced every 3 days.",
+  "author": {
+    "name": "zebbern"
+  },
+  "homepage": "https://github.com/zebbern/hacktricks-mcp",
+  "repository": "https://github.com/zebbern/hacktricks-mcp",
+  "license": "MIT",
+  "keywords": [
+    "mcp",
+    "hacktricks",
+    "pentesting",
+    "red-team",
+    "security"
+  ]
+}

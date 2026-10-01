@@ -12,13 +12,24 @@ When editing tool behavior in `src/server.ts`, keep the skill in sync: the skill
 
 ## MCP registry
 
-`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). Publishing is automated: `release.yml` stamps the release version into `server.json`, verifies a pinned `mcp-publisher` binary against its checksums, authenticates with GitHub OIDC (no secrets), and publishes on every version tag. The registry listing tracks the npm package automatically.
+`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). Publishing is a local, one-command step after each npm release (kept out of CI by design):
 
-To publish manually instead: `mcp-publisher login github && mcp-publisher publish`.
+```bash
+mcp-publisher login github   # device flow, once per machine
+mcp-publisher publish        # from the repo root, after npm has the new version
+```
 
-## Kimi Work plugin
+The registry verifies npm ownership via the `mcpName` field in `package.json`, and requires `server.json` `version` + `packages[].version` to match the published npm version exactly. `description` must stay under 100 characters.
 
-`kimi-plugin/` holds the Kimi plugin source (manifest `kimi.plugin.json` plus the skill and locales), registered into the personal marketplace from that directory. The plugin wraps the same `npx -y @zebbern/hacktricks-mcp` stdio server; there is no extra code to maintain. Its `skills/hacktricks/SKILL.md` is a copy of the canonical skill in `skills/`: edit `skills/` first, then sync the copy.
+## Claude Code, Codex and Kimi plugin packaging
+
+This repo doubles as an installable plugin for three ecosystems:
+
+- `.claude-plugin/plugin.json` + `.mcp.json`: Claude Code plugin format
+- `.codex-plugin/plugin.json` + `mcp.json`: Codex plugin format
+- `kimi-plugin/`: Kimi Work plugin, registered into the personal marketplace from that directory
+
+All three wrap the same `npx -y @zebbern/hacktricks-mcp` stdio server and share the canonical skill in `skills/hacktricks/SKILL.md` (the kimi-plugin copy is synced from it). When bumping versions, update the three plugin manifests as well; there is no extra code to maintain.
 
 ## Claude Desktop / Cursor / generic MCP
 

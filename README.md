@@ -8,7 +8,19 @@ Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5
 
 Requirements: Node.js 22.13 or newer (uses the built-in `node:sqlite`, zero native dependencies).
 
-Add to your MCP client config (Claude Desktop, Cursor, Kimi, etc.):
+**Claude Code:**
+
+```bash
+claude mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp
+```
+
+**Codex CLI:**
+
+```bash
+codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp
+```
+
+**Any MCP client** (Claude Desktop, Cursor, Kimi, etc.), config JSON:
 
 ```json
 {
@@ -20,6 +32,8 @@ Add to your MCP client config (Claude Desktop, Cursor, Kimi, etc.):
   }
 }
 ```
+
+**As a plugin** (bundles the agent skill that teaches efficient usage): this repo is a valid plugin for Claude Code (`.claude-plugin/`), Codex (`.codex-plugin/`) and Kimi (`kimi-plugin/`). Add it from your client's plugin marketplace flow pointing at `zebbern/hacktricks-mcp`, or for Kimi Work use [this plugin link](kimi-work://plugin?id=hacktricks).
 
 Then ask things like:
 
