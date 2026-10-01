@@ -24,7 +24,7 @@ Re-run `mcp-publisher publish` after each npm release so the registry version tr
 
 ## Kimi Work plugin
 
-For Kimi Work users, the repo can also be packaged as a Kimi plugin (plugin manifest plus the skill) so it installs from the plugin marketplace with one click. The plugin wraps the same npx command; there is no extra code to maintain. Ask for the plugin packaging step when you want this done.
+`kimi-plugin/` holds the Kimi plugin source (manifest `kimi.plugin.json` plus the skill and locales), registered into the personal marketplace from that directory. The plugin wraps the same `npx -y @zebbern/hacktricks-mcp` stdio server; there is no extra code to maintain. Its `skills/hacktricks/SKILL.md` is a copy of the canonical skill in `skills/`: edit `skills/` first, then sync the copy.
 
 ## Claude Desktop / Cursor / generic MCP
 

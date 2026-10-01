@@ -1,1 +1,8 @@
-mcp
+{
+  "mcpServers": {
+    "hacktricks": {
+      "command": "npx",
+      "args": ["-y", "@zebbern/hacktricks-mcp"]
+    }
+  }
+}

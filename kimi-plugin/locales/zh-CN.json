@@ -1,0 +1,23 @@
+{
+  "displayName": "HackTricks",
+  "shortDescription": "在 Kimi 里离线搜索 HackTricks 安全知识库",
+  "longDescription": "离线检索并阅读 HackTricks 攻防安全 wiki：渗透测试、权限提升、Web 漏洞利用、Active Directory、云、Wi-Fi 与取证技术。内置全文索引，每 3 天与上游同步一次。",
+  "developerName": "zebbern",
+  "tryPrompts": [
+    "在 HackTricks 里搜 kerberoast，给我攻击命令",
+    "如何从 lxd 用户组提权？",
+    "看看 HackTricks 里的 SSRF 利用技巧"
+  ],
+  "mcpOverrides": {
+    "hacktricks": {
+      "displayName": "HackTricks",
+      "description": "在 Kimi 里离线搜索 HackTricks 安全知识库"
+    }
+  },
+  "skillOverrides": {
+    "hacktricks": {
+      "displayName": "HackTricks",
+      "description": "在 Kimi 里离线搜索 HackTricks 安全知识库"
+    }
+  }
+}

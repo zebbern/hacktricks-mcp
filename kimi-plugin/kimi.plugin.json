@@ -1,0 +1,61 @@
+{
+  "$schema": "https://catalog.msh.team/misc/kimi.plugin.schema.json",
+  "name": "hacktricks",
+  "version": "0.1.0",
+  "description": "Search and read the HackTricks offensive-security wiki offline: pentesting, privilege escalation, web exploitation, Active Directory, cloud, Wi-Fi and forensics techniques via a bundled full-text index synced every 3 days.",
+  "keywords": [
+    "hacktricks",
+    "pentesting",
+    "security",
+    "red-team",
+    "mcp",
+    "privilege-escalation"
+  ],
+  "author": "zebbern",
+  "license": "MIT",
+  "skillInstructions": "",
+  "interface": {
+    "displayName": "HackTricks",
+    "shortDescription": "Offline HackTricks security wiki search in Kimi",
+    "longDescription": "Search and read the HackTricks offensive-security wiki offline: pentesting, privilege escalation, web exploitation, Active Directory, cloud, Wi-Fi and forensics techniques via a bundled full-text index synced every 3 days.",
+    "developerName": "zebbern",
+    "websiteURL": "https://github.com/zebbern/hacktricks-mcp",
+    "iconUrl": "",
+    "category": "PRODUCTIVITY",
+    "defaultLocale": "en-US",
+    "locales": "./locales/",
+    "tryPrompts": [
+      "Search HackTricks for kerberoast and show me the attack commands",
+      "How do I escalate privileges from the lxd group?",
+      "Show me SSRF exploitation techniques from HackTricks"
+    ],
+    "skillOverrides": {
+      "hacktricks": {
+        "displayName": "HackTricks",
+        "description": "Offline HackTricks security wiki search in Kimi"
+      }
+    },
+    "hostKind": "local",
+    "platforms": [
+      "macos",
+      "linux",
+      "windows"
+    ],
+    "mcpOverrides": {
+      "hacktricks": {
+        "displayName": "HackTricks",
+        "description": "Offline HackTricks security wiki search in Kimi"
+      }
+    }
+  },
+  "skills": "./skills/",
+  "mcpServers": {
+    "hacktricks": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@zebbern/hacktricks-mcp"
+      ]
+    }
+  }
+}
