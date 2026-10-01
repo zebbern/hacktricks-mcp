@@ -22,7 +22,8 @@
     "sync": "tsx scripts/sync.ts",
     "eval": "tsx scripts/eval.ts",
     "smoke": "tsx scripts/smoke.ts",
-    "version": "node scripts/version-sync.mjs && git add server.json .claude-plugin/plugin.json .codex-plugin/plugin.json",
+    "sync:skills": "node scripts/sync-skills.mjs",
+    "version": "node scripts/version-sync.mjs && node scripts/sync-skills.mjs && git add server.json .claude-plugin/plugin.json .codex-plugin/plugin.json kimi-plugin/skills",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

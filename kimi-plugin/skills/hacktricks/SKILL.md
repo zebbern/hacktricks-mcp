@@ -1,11 +1,13 @@
+<!-- GENERATED COPY of skills/hacktricks/SKILL.md - do not edit directly; run: npm run sync:skills -->
+
 ---
 name: hacktricks
-description: Look up offensive-security techniques in the HackTricks wiki. Use when the task involves pentesting, privilege escalation, web exploitation, Active Directory, cloud attacks, Wi-Fi attacks, forensics, or CTF-style challenges.
+description: Look up offensive-security techniques in the HackTricks wiki via the hacktricks-mcp tools. Use when the task involves pentesting, privilege escalation, web exploitation, Active Directory, cloud attacks, Wi-Fi attacks, forensics, or CTF-style challenges.
 ---
 
 # HackTricks lookup skill
 
-This plugin provides three MCP tools: `hacktricks_search`, `hacktricks_get_page`, `hacktricks_get_toc`. They query a local full-text index of the HackTricks wiki (1,000+ pages). All are read-only and offline.
+You have access to three MCP tools: `hacktricks_search`, `hacktricks_get_page`, `hacktricks_get_toc`. They query a local full-text index of the HackTricks wiki (1,000+ pages). All are read-only and offline.
 
 ## Workflow
 

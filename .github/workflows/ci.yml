@@ -21,6 +21,9 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      - name: Guard: skill copies must not drift
+        run: node scripts/sync-skills.mjs --check
+
       - name: Build index from upstream
         run: npm run sync
 

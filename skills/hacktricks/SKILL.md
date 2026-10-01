@@ -5,7 +5,7 @@ description: Look up offensive-security techniques in the HackTricks wiki via th
 
 # HackTricks lookup skill
 
-You have access to three MCP tools from hacktricks-mcp: `hacktricks_search`, `hacktricks_get_page`, `hacktricks_get_toc`. They query a local full-text index of the HackTricks wiki. All are read-only and offline.
+You have access to three MCP tools: `hacktricks_search`, `hacktricks_get_page`, `hacktricks_get_toc`. They query a local full-text index of the HackTricks wiki (1,000+ pages). All are read-only and offline.
 
 ## Workflow
 
@@ -13,7 +13,7 @@ You have access to three MCP tools from hacktricks-mcp: `hacktricks_search`, `ha
    - Common abbreviations work: `privesc`, `sqli`, `rce`, `lfi`, `xss`, `ssrf`, `ssti`, `xxe`.
    - If results span the wrong platform, repeat with `category` (e.g. `Windows Hardening`, `Linux Hardening`, `Pentesting Web`, `MacOS Hardening`).
 2. **Read surgically.** Call `hacktricks_get_page` on the best `path`:
-   - Use `section` when the outline suggests one part matters (e.g. `section="GTFOBins"`).
+   - Use `section` when only one part matters (e.g. `section="GTFOBins"`).
    - Use `codeOnly=true` when the user wants commands or payloads, not explanation.
    - Read the full page only when sections are not enough.
 3. **Orient when lost.** Call `hacktricks_get_toc` to see the category tree if searches keep missing; the wiki may name the topic differently than the user.
@@ -22,7 +22,7 @@ You have access to three MCP tools from hacktricks-mcp: `hacktricks_search`, `ha
 
 - Zero hits: drop filler words and retry with the core technical noun. Try the abbreviation and the full term.
 - `section not found` error: the response lists the real headings; pick the closest one.
-- Content looks stale: the index re-syncs from upstream every 3 days; the server instructions state the last sync date. Mention it if freshness matters.
+- Content freshness: the index re-syncs from upstream every 3 days; the server instructions state the last sync date. Mention it if freshness matters.
 
 ## Boundaries
 

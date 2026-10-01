@@ -29,7 +29,9 @@ This repo doubles as an installable plugin for three ecosystems:
 - `.codex-plugin/plugin.json` + `mcp.json`: Codex plugin format
 - `kimi-plugin/`: Kimi Work plugin, registered into the personal marketplace from that directory
 
-All three wrap the same `npx -y @zebbern/hacktricks-mcp` stdio server and share the canonical skill in `skills/hacktricks/SKILL.md` (the kimi-plugin copy is synced from it). When bumping versions, update the three plugin manifests as well; there is no extra code to maintain.
+**One skill, one file.** The canonical skill is `skills/hacktricks/SKILL.md` in the [Agent Skills](https://agentskills.io) format. Claude Code and Codex auto-discover `skills/` at the plugin root, so they read this file directly with no copy. Kimi plugins are installed as self-contained directories, so `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy: never edit it directly, run `npm run sync:skills` after changing the canonical file. CI fails on drift (`sync-skills.mjs --check`), and the `npm version` hook re-syncs automatically.
+
+When bumping versions, the same hook stamps `server.json` and both plugin manifests. There is no extra code to maintain.
 
 ## Claude Desktop / Cursor / generic MCP
 
