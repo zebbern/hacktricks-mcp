@@ -1,6 +1,6 @@
 {
   "name": "@zebbern/hacktricks-mcp",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "mcpName": "io.github.zebbern/hacktricks-mcp",
   "description": "MCP server giving AI agents fast full-text search and section-level retrieval over the HackTricks security wiki. Ships with a pre-built FTS5 index, synced with upstream every 3 days.",
   "type": "module",
