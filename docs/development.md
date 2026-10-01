@@ -54,19 +54,18 @@ npm publish --access public
 
 `prepublishOnly` runs the build automatically. The published tarball includes `dist/` and the current `data/` index.
 
-### Automated releases (trusted publishing, recommended)
+### Automated releases (trusted publishing)
 
-After the first manual publish:
-
-1. On npmjs.com, open the package settings and add a **trusted publisher**: GitHub Actions, repo `zebbern/hacktricks-mcp`, workflow `release.yml`.
-2. Then releasing is just:
+Everything runs off version tags:
 
 ```bash
 npm version patch   # or minor / major
 git push --follow-tags
 ```
 
-The `release.yml` workflow publishes with `--provenance` using OIDC. No npm token is stored anywhere.
+The `release.yml` workflow then: rebuilds and quality-gates the index, creates the GitHub Release with the index assets, publishes to npm via OIDC trusted publishing (no `NPM_TOKEN` anywhere), and publishes the updated `server.json` to the official MCP registry via GitHub OIDC.
+
+One-time prerequisites (already done for this repo): the first publish was manual (`npm publish --access public`), and the trusted publisher is configured on npmjs.com for `zebbern/hacktricks-mcp` + `release.yml`.
 
 ### What ships in the package
 

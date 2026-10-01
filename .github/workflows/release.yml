@@ -45,3 +45,33 @@ jobs:
       # for public repo + public package. No NPM_TOKEN needed.
       - name: Publish to npm
         run: npm publish --access public
+
+      - name: Stamp server.json version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          node -e "
+            const fs = require('fs');
+            const s = JSON.parse(fs.readFileSync('server.json', 'utf8'));
+            s.version = '$VERSION';
+            for (const p of s.packages ?? []) p.version = '$VERSION';
+            fs.writeFileSync('server.json', JSON.stringify(s, null, 2) + '\n');
+          "
+
+      - name: Install mcp-publisher (pinned + checksum-verified)
+        run: |
+          VERSION="v1.8.1"
+          BASE="https://github.com/modelcontextprotocol/registry/releases/download/${VERSION}"
+          curl -fsSL "${BASE}/mcp-publisher_linux_amd64.tar.gz" -o mcp-publisher.tar.gz
+          curl -fsSL "${BASE}/registry_${VERSION#v}_checksums.txt" -o checksums.txt
+          grep "mcp-publisher_linux_amd64.tar.gz" checksums.txt | sha256sum -c -
+          tar xzf mcp-publisher.tar.gz mcp-publisher
+
+      - name: Publish to MCP registry (OIDC, retry for npm propagation)
+        run: |
+          ./mcp-publisher login github-oidc
+          for i in 1 2 3 4 5; do
+            if ./mcp-publisher publish; then exit 0; fi
+            echo "Attempt $i failed, waiting 60s for npm propagation..."
+            sleep 60
+          done
+          exit 1

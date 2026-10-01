@@ -12,15 +12,9 @@ When editing tool behavior in `src/server.ts`, keep the skill in sync: the skill
 
 ## MCP registry
 
-`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). Publishing there makes the server discoverable by registry-aware clients:
+`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). Publishing is automated: `release.yml` stamps the release version into `server.json`, verifies a pinned `mcp-publisher` binary against its checksums, authenticates with GitHub OIDC (no secrets), and publishes on every version tag. The registry listing tracks the npm package automatically.
 
-```bash
-npm install -g mcp-publisher
-mcp-publisher login github
-mcp-publisher publish
-```
-
-Re-run `mcp-publisher publish` after each npm release so the registry version tracks the package. Keep `server.json` version in lockstep with `package.json`.
+To publish manually instead: `mcp-publisher login github && mcp-publisher publish`.
 
 ## Kimi Work plugin
 
