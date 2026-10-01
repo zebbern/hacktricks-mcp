@@ -66,13 +66,22 @@ jobs:
           grep " mcp-publisher_linux_amd64.tar.gz$" checksums.txt | sha256sum -c -
           tar xzf mcp-publisher_linux_amd64.tar.gz mcp-publisher
 
-      - name: Publish to MCP registry (OIDC, retry for npm propagation)
+      - name: Wait for npm propagation
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for i in $(seq 1 20); do
+            if npm view "@zebbern/hacktricks-mcp@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
+              echo "npm registry serves $VERSION"
+              exit 0
+            fi
+            echo "waiting for npm propagation... (attempt $i)"
+            sleep 45
+          done
+          echo "npm did not propagate $VERSION within 15 minutes"
+          exit 1
+
+      - name: Publish to MCP registry (OIDC)
         run: |
           ./mcp-publisher validate
           ./mcp-publisher login github-oidc
-          for i in 1 2 3 4 5; do
-            if ./mcp-publisher publish; then exit 0; fi
-            echo "Attempt $i failed, waiting 60s for npm propagation..."
-            sleep 60
-          done
-          exit 1
+          ./mcp-publisher publish
