@@ -68,6 +68,7 @@ jobs:
 
       - name: Publish to MCP registry (OIDC, retry for npm propagation)
         run: |
+          ./mcp-publisher validate
           ./mcp-publisher login github-oidc
           for i in 1 2 3 4 5; do
             if ./mcp-publisher publish; then exit 0; fi
