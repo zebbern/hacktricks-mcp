@@ -33,6 +33,14 @@ jobs:
       - name: Smoke-test MCP server
         run: npm run smoke
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            data/hacktricks.db
+            data/toc.json
+          generate_release_notes: true
+
       # Trusted publishing: OIDC auth via id-token, provenance is automatic
       # for public repo + public package. No NPM_TOKEN needed.
       - name: Publish to npm
