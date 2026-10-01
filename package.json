@@ -22,6 +22,7 @@
     "sync": "tsx scripts/sync.ts",
     "eval": "tsx scripts/eval.ts",
     "smoke": "tsx scripts/smoke.ts",
+    "version": "node scripts/version-sync.mjs && git add server.json .claude-plugin/plugin.json .codex-plugin/plugin.json",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
