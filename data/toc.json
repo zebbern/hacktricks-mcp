@@ -805,33 +805,44 @@
   "children": []
  },
  {
-  "title": "Linux Basics",
+  "title": "Linux - Hardening Overview",
+  "path": "linux-hardening/README.md",
+  "children": []
+ },
+ {
+  "title": "Linux - Basics",
+  "path": "linux-hardening/linux-basics/README.md",
   "children": [
    {
-    "title": "Linux Privilege Escalation",
+    "title": "Linux - Privilege Escalation",
     "path": "linux-hardening/linux-basics/linux-privilege-escalation/README.md",
     "children": []
    },
    {
-    "title": "Useful Linux Commands",
+    "title": "Linux - Shell Startup, Aliases, and History",
+    "path": "linux-hardening/linux-basics/shell-startup-aliases-and-history.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Useful Commands",
     "path": "linux-hardening/linux-basics/useful-linux-commands.md",
     "children": []
    },
    {
-    "title": "Linux Environment Variables",
+    "title": "Linux - Environment Variables",
     "path": "linux-hardening/linux-basics/linux-environment-variables.md",
     "children": []
    },
    {
-    "title": "Bypass Linux Restrictions",
+    "title": "Linux - Bypass Restrictions",
     "path": "linux-hardening/linux-basics/bypass-linux-restrictions/README.md",
     "children": [
      {
-      "title": "Bypass FS protections: read-only / no-exec / Distroless",
+      "title": "Linux - Bypass FS protections: read-only / no-exec / Distroless",
       "path": "linux-hardening/linux-basics/bypass-linux-restrictions/bypass-fs-protections-read-only-no-exec-distroless/README.md",
       "children": [
        {
-        "title": "DDexec / EverythingExec",
+        "title": "Linux - DDexec / EverythingExec",
         "path": "linux-hardening/linux-basics/bypass-linux-restrictions/bypass-fs-protections-read-only-no-exec-distroless/ddexec.md",
         "children": []
        }
@@ -842,53 +853,65 @@
   ]
  },
  {
-  "title": "Main System Information",
+  "title": "Linux - Main System Information",
+  "path": "linux-hardening/main-system-information/README.md",
   "children": [
    {
-    "title": "Kernel Modules and modprobe Abuse",
+    "title": "Linux - Kernel Vulnerability Assessment",
+    "path": "linux-hardening/main-system-information/kernel-vulnerability-assessment.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Kernel Modules and modprobe Abuse",
     "path": "linux-hardening/main-system-information/kernel-modules-and-modprobe.md",
     "children": []
    },
    {
-    "title": "Sudo Command Abuse",
+    "title": "Linux - Sudo Command Abuse",
     "path": "linux-hardening/main-system-information/sudo-command-abuse.md",
     "children": []
    },
    {
-    "title": "Filesystem, Inodes and Recovery",
+    "title": "Linux - Symlinks, Hardlinks, and File Descriptors",
+    "path": "linux-hardening/main-system-information/filesystem-links-and-file-descriptors.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Filesystem, Inodes and Recovery",
     "path": "linux-hardening/main-system-information/filesystem-inodes-and-recovery.md",
     "children": []
    },
    {
-    "title": "Checklist - Linux Privilege Escalation",
+    "title": "Linux - Privilege Escalation Checklist",
     "path": "linux-hardening/main-system-information/linux-privilege-escalation-checklist.md",
     "children": []
    },
    {
-    "title": "Escaping from Jails",
+    "title": "Linux - Escaping from Jails",
     "path": "linux-hardening/main-system-information/escaping-from-limited-bash.md",
     "children": []
    },
    {
-    "title": "Kernel/LPE/CVE material",
+    "title": "Linux - Kernel/LPE/CVE Material",
+    "path": "linux-hardening/main-system-information/kernel-lpe-cves/README.md",
     "children": [
      {
-      "title": "Vmware Tools Service Discovery Untrusted Search Path Cve 2025 41244",
+      "title": "Linux - Vmware Tools Service Discovery Untrusted Search Path Cve 2025 41244",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/vmware-tools-service-discovery-untrusted-search-path-cve-2025-41244.md",
       "children": []
      },
      {
-      "title": "Copy Fail Af Alg Splice Page Cache Overwrite Cve 2026 31431",
+      "title": "Linux - Copy Fail Af Alg Splice Page Cache Overwrite Cve 2026 31431",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/copy-fail-af_alg-splice-page-cache-overwrite-cve-2026-31431.md",
       "children": []
      },
      {
-      "title": "Posix Cpu Timers Toctou Cve 2025 38352",
+      "title": "Linux - Posix Cpu Timers Toctou Cve 2025 38352",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/posix-cpu-timers-toctou-cve-2025-38352.md",
       "children": []
      },
      {
-      "title": "Linux Ptrace Exit Race Pidfd Getfd Fd Theft",
+      "title": "Linux - Ptrace Exit Race Pidfd Getfd Fd Theft",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/linux-ptrace-exit-race-pidfd_getfd-fd-theft.md",
       "children": []
      }
@@ -897,288 +920,329 @@
   ]
  },
  {
-  "title": "User Information",
+  "title": "Linux - User Information",
+  "path": "linux-hardening/user-information/README.md",
   "children": [
    {
-    "title": "euid, ruid, suid",
+    "title": "Linux - Users, Sessions, and Credential Artifacts",
+    "path": "linux-hardening/user-information/user-and-session-triage.md",
+    "children": []
+   },
+   {
+    "title": "Linux - euid, ruid, suid",
     "path": "linux-hardening/user-information/euid-ruid-suid.md",
     "children": []
    },
    {
-    "title": "Interesting Groups - Linux Privesc",
+    "title": "Linux - Interesting Groups for Privilege Escalation",
     "path": "linux-hardening/user-information/interesting-groups-linux-pe/README.md",
     "children": [
      {
-      "title": "lxd/lxc Group - Privilege escalation",
+      "title": "Linux - lxd/lxc Group - Privilege escalation",
       "path": "linux-hardening/user-information/interesting-groups-linux-pe/lxd-privilege-escalation.md",
       "children": []
      }
     ]
    },
    {
-    "title": "SSH Forward Agent exploitation",
+    "title": "Linux - SSH Forward Agent exploitation",
     "path": "linux-hardening/user-information/ssh-forward-agent-exploitation.md",
     "children": []
    },
    {
-    "title": "Linux Active Directory",
+    "title": "Linux - Active Directory",
     "path": "linux-hardening/user-information/linux-active-directory.md",
     "children": []
    }
   ]
  },
  {
-  "title": "Interesting Files & Permissions",
+  "title": "Linux - Interesting Files & Permissions",
+  "path": "linux-hardening/interesting-files-permissions/README.md",
   "children": [
    {
-    "title": "Arbitrary File Write to Root",
+    "title": "Linux - SUID, SGID, ACLs, and Sensitive Files",
+    "path": "linux-hardening/interesting-files-permissions/suid-sgid-and-acl-triage.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Arbitrary File Write to Root",
     "path": "linux-hardening/interesting-files-permissions/write-to-root.md",
     "children": []
    },
    {
-    "title": "Linux Capabilities",
+    "title": "Linux - Capabilities",
     "path": "linux-hardening/interesting-files-permissions/linux-capabilities.md",
     "children": []
    },
    {
-    "title": "SUID Shared Library and Linker Abuse",
+    "title": "Linux - SUID Shared Library and Linker Abuse",
     "path": "linux-hardening/interesting-files-permissions/suid-shared-library-and-linker-abuse.md",
     "children": []
    },
    {
-    "title": "ld.so privesc exploit example",
+    "title": "Linux - ld.so privesc exploit example",
     "path": "linux-hardening/interesting-files-permissions/ld.so.conf-example.md",
     "children": []
    },
    {
-    "title": "NFS no_root_squash/no_all_squash misconfiguration PE",
+    "title": "Linux - NFS no_root_squash/no_all_squash misconfiguration PE",
     "path": "linux-hardening/interesting-files-permissions/nfs-no_root_squash-misconfiguration-pe.md",
     "children": []
    },
    {
-    "title": "Wildcards Spare tricks",
+    "title": "Linux - Wildcards Spare tricks",
     "path": "linux-hardening/interesting-files-permissions/wildcards-spare-tricks.md",
     "children": []
    },
    {
-    "title": "SELinux",
+    "title": "Linux - SELinux",
     "path": "linux-hardening/interesting-files-permissions/selinux.md",
     "children": []
    }
   ]
  },
  {
-  "title": "Network Information",
+  "title": "Linux - Network Information",
+  "path": "linux-hardening/network-information/README.md",
   "children": [
    {
-    "title": "Local Network and Socket Triage",
+    "title": "Linux - Traffic Capture, Firewall, and Egress Triage",
+    "path": "linux-hardening/network-information/traffic-capture-and-firewall-egress.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Local Network and Socket Triage",
     "path": "linux-hardening/network-information/local-network-and-socket-triage.md",
     "children": []
    },
    {
-    "title": "Socket Command Injection",
+    "title": "Linux - Socket Command Injection",
     "path": "linux-hardening/network-information/socket-command-injection.md",
     "children": []
    },
    {
-    "title": "Cisco - vmanage",
+    "title": "Linux - Cisco - vmanage",
     "path": "linux-hardening/network-information/cisco-vmanage.md",
     "children": []
    }
   ]
  },
  {
-  "title": "Software Information",
+  "title": "Linux - Software Information",
+  "path": "linux-hardening/software-information/README.md",
   "children": [
    {
-    "title": "PAM - Pluggable Authentication Modules",
+    "title": "Linux - Local Web and Authentication Services",
+    "path": "linux-hardening/software-information/local-web-and-auth-services.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Databases and Secret Material",
+    "path": "linux-hardening/software-information/databases-and-secret-material.md",
+    "children": []
+   },
+   {
+    "title": "Linux - PAM - Pluggable Authentication Modules",
     "path": "linux-hardening/software-information/pam-pluggable-authentication-modules.md",
     "children": []
    },
    {
-    "title": "FreeIPA Pentesting",
+    "title": "Linux - FreeIPA Pentesting",
     "path": "linux-hardening/software-information/freeipa-pentesting.md",
     "children": []
    },
    {
-    "title": "Logstash",
+    "title": "Linux - Logstash",
     "path": "linux-hardening/software-information/logstash.md",
     "children": []
    },
    {
-    "title": "Splunk LPE and Persistence",
+    "title": "Linux - Splunk LPE and Persistence",
     "path": "linux-hardening/software-information/splunk-lpe-and-persistence.md",
     "children": []
    },
    {
-    "title": "Node inspector/CEF debug abuse",
+    "title": "Linux - Node inspector/CEF debug abuse",
     "path": "linux-hardening/software-information/electron-cef-chromium-debugger-abuse.md",
     "children": []
    },
    {
-    "title": "Android Rooting Frameworks Manager Auth Bypass Syscall Hook",
+    "title": "Linux - Android Rooting Frameworks Manager Auth Bypass Syscall Hook",
     "path": "linux-hardening/software-information/android-rooting-frameworks-manager-auth-bypass-syscall-hook.md",
     "children": []
    }
   ]
  },
  {
-  "title": "Processes, Crontab, Systemd, D-Bus",
+  "title": "Linux - Processes, Crontab, Systemd, D-Bus",
+  "path": "linux-hardening/processes-crontab-systemd-dbus/README.md",
   "children": [
    {
-    "title": "D-Bus Enumeration & Command Injection Privilege Escalation",
+    "title": "Linux - Process Enumeration and Service Paths",
+    "path": "linux-hardening/processes-crontab-systemd-dbus/process-enumeration-and-service-paths.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Cron Jobs and Systemd Timers",
+    "path": "linux-hardening/processes-crontab-systemd-dbus/cron-and-systemd-timers.md",
+    "children": []
+   },
+   {
+    "title": "Linux - D-Bus Enumeration & Command Injection Privilege Escalation",
     "path": "linux-hardening/processes-crontab-systemd-dbus/d-bus-enumeration-and-command-injection-privilege-escalation.md",
     "children": []
    },
    {
-    "title": "Payloads to execute",
+    "title": "Linux - Payloads to execute",
     "path": "linux-hardening/processes-crontab-systemd-dbus/payloads-to-execute.md",
     "children": []
    }
   ]
  },
  {
-  "title": "Containers, Namespaces",
+  "title": "Linux - Containers, Namespaces",
+  "path": "linux-hardening/containers-namespaces/README.md",
   "children": [
    {
-    "title": "Containerd (ctr) Privilege Escalation",
+    "title": "Linux - Containerd (ctr) Privilege Escalation",
     "path": "linux-hardening/containers-namespaces/containerd-ctr-privilege-escalation.md",
     "children": []
    },
    {
-    "title": "RunC Privilege Escalation",
+    "title": "Linux - RunC Privilege Escalation",
     "path": "linux-hardening/containers-namespaces/runc-privilege-escalation.md",
     "children": []
    },
    {
-    "title": "Container Security",
+    "title": "Linux - Container Security",
     "path": "linux-hardening/containers-namespaces/container-security/README.md",
     "children": [
      {
-      "title": "Runtimes And Engines",
+      "title": "Linux - Runtimes And Engines",
       "path": "linux-hardening/containers-namespaces/container-security/runtimes-and-engines.md",
       "children": []
      },
      {
-      "title": "Runtime API And Daemon Exposure",
+      "title": "Linux - Runtime API And Daemon Exposure",
       "path": "linux-hardening/containers-namespaces/container-security/runtime-api-and-daemon-exposure.md",
       "children": []
      },
      {
-      "title": "Authorization Plugins",
+      "title": "Linux - Authorization Plugins",
       "path": "linux-hardening/containers-namespaces/container-security/authorization-plugins.md",
       "children": []
      },
      {
-      "title": "Image Security And Secrets",
+      "title": "Linux - Image Security And Secrets",
       "path": "linux-hardening/containers-namespaces/container-security/image-security-and-secrets.md",
       "children": []
      },
      {
-      "title": "Assessment And Hardening",
+      "title": "Linux - Assessment And Hardening",
       "path": "linux-hardening/containers-namespaces/container-security/assessment-and-hardening.md",
       "children": []
      },
      {
-      "title": "Sensitive Host Mounts",
+      "title": "Linux - Sensitive Host Mounts",
       "path": "linux-hardening/containers-namespaces/container-security/sensitive-host-mounts.md",
       "children": []
      },
      {
-      "title": "Privileged Containers",
+      "title": "Linux - Privileged Containers",
       "path": "linux-hardening/containers-namespaces/container-security/privileged-containers.md",
       "children": []
      },
      {
-      "title": "Distroless",
+      "title": "Linux - Distroless",
       "path": "linux-hardening/containers-namespaces/container-security/distroless.md",
       "children": []
      },
      {
-      "title": "Protections",
+      "title": "Linux - Protections",
       "path": "linux-hardening/containers-namespaces/container-security/protections/README.md",
       "children": [
        {
-        "title": "AppArmor",
+        "title": "Linux - AppArmor",
         "path": "linux-hardening/containers-namespaces/container-security/protections/apparmor.md",
         "children": []
        },
        {
-        "title": "Capabilities",
+        "title": "Linux - Capabilities",
         "path": "linux-hardening/containers-namespaces/container-security/protections/capabilities.md",
         "children": []
        },
        {
-        "title": "CGroups",
+        "title": "Linux - CGroups",
         "path": "linux-hardening/containers-namespaces/container-security/protections/cgroups.md",
         "children": []
        },
        {
-        "title": "Masked Paths",
+        "title": "Linux - Masked Paths",
         "path": "linux-hardening/containers-namespaces/container-security/protections/masked-paths.md",
         "children": []
        },
        {
-        "title": "No New Privileges",
+        "title": "Linux - No New Privileges",
         "path": "linux-hardening/containers-namespaces/container-security/protections/no-new-privileges.md",
         "children": []
        },
        {
-        "title": "Read Only Paths",
+        "title": "Linux - Read Only Paths",
         "path": "linux-hardening/containers-namespaces/container-security/protections/read-only-paths.md",
         "children": []
        },
        {
-        "title": "Seccomp",
+        "title": "Linux - Seccomp",
         "path": "linux-hardening/containers-namespaces/container-security/protections/seccomp.md",
         "children": []
        },
        {
-        "title": "SELinux",
+        "title": "Linux - SELinux",
         "path": "linux-hardening/containers-namespaces/container-security/protections/selinux.md",
         "children": []
        },
        {
-        "title": "Namespaces",
+        "title": "Linux - Namespaces",
         "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/README.md",
         "children": [
          {
-          "title": "CGroup Namespace",
+          "title": "Linux - CGroup Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/cgroup-namespace.md",
           "children": []
          },
          {
-          "title": "IPC Namespace",
+          "title": "Linux - IPC Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/ipc-namespace.md",
           "children": []
          },
          {
-          "title": "PID Namespace",
+          "title": "Linux - PID Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/pid-namespace.md",
           "children": []
          },
          {
-          "title": "Mount Namespace",
+          "title": "Linux - Mount Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/mount-namespace.md",
           "children": []
          },
          {
-          "title": "Network Namespace",
+          "title": "Linux - Network Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/network-namespace.md",
           "children": []
          },
          {
-          "title": "Time Namespace",
+          "title": "Linux - Time Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/time-namespace.md",
           "children": []
          },
          {
-          "title": "User Namespace",
+          "title": "Linux - User Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/user-namespace.md",
           "children": []
          },
          {
-          "title": "UTS Namespace",
+          "title": "Linux - UTS Namespace",
           "path": "linux-hardening/containers-namespaces/container-security/protections/namespaces/uts-namespace.md",
           "children": []
          }
@@ -1191,18 +1255,18 @@
   ]
  },
  {
-  "title": "Post-Exploitation",
+  "title": "Linux - Post-Exploitation",
+  "path": "linux-hardening/post-exploitation/README.md",
   "children": [
    {
-    "title": "Linux Post-Exploitation",
-    "path": "linux-hardening/post-exploitation/linux-post-exploitation/README.md",
-    "children": [
-     {
-      "title": "Trojanized System Daemons and Reverse Proxies",
-      "path": "linux-hardening/post-exploitation/linux-post-exploitation/trojanized-system-daemons-and-reverse-proxies.md",
-      "children": []
-     }
-    ]
+    "title": "Linux - Cloud Instance Metadata",
+    "path": "linux-hardening/post-exploitation/cloud-instance-metadata.md",
+    "children": []
+   },
+   {
+    "title": "Linux - Trojanized System Daemons and Reverse Proxies",
+    "path": "linux-hardening/post-exploitation/trojanized-system-daemons-and-reverse-proxies.md",
+    "children": []
    }
   ]
  },
