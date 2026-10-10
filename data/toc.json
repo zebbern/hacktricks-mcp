@@ -872,6 +872,11 @@
     "children": []
    },
    {
+    "title": "Linux - SUSE Session and Disk-Service Escalation Indicators",
+    "path": "linux-hardening/main-system-information/suse-session-and-disk-service-escalation.md",
+    "children": []
+   },
+   {
     "title": "Linux - Symlinks, Hardlinks, and File Descriptors",
     "path": "linux-hardening/main-system-information/filesystem-links-and-file-descriptors.md",
     "children": []
