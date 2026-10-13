@@ -25,6 +25,11 @@
   "children": []
  },
  {
+  "title": "Proof Assistant and Formal Verification Security",
+  "path": "generic-methodologies-and-resources/proof-assistant-formal-verification-security.md",
+  "children": []
+ },
+ {
   "title": "External Recon Methodology",
   "path": "generic-methodologies-and-resources/external-recon-methodology/README.md",
   "children": [
@@ -129,7 +134,7 @@
       "path": "generic-methodologies-and-resources/pentesting-wifi/wifi-hardware-drivers-and-linux.md",
       "children": [
        {
-        "title": "Nexmon Monitor and Injection on Android",
+        "title": "Nexmon Monitor and Injection on Android (formerly “Enable Nexmon Monitor And Injection On Android”)",
         "path": "generic-methodologies-and-resources/pentesting-wifi/enable-nexmon-monitor-and-injection-on-android.md",
         "children": []
        }
@@ -239,7 +244,7 @@
     "path": "generic-methodologies-and-resources/pentesting-wifi/evil-twin-rogue-ap-and-client-association-attacks.md",
     "children": [
      {
-      "title": "Enterprise EAP Evil Twin (including EAP-TLS)",
+      "title": "Enterprise EAP Evil Twin (including EAP-TLS) / Evil Twin EAP-TLS",
       "path": "generic-methodologies-and-resources/pentesting-wifi/evil-twin-eap-tls.md",
       "children": []
      }
@@ -810,7 +815,7 @@
   "children": []
  },
  {
-  "title": "Linux - Basics",
+  "title": "Linux - Basics (formerly “Linux Basics”)",
   "path": "linux-hardening/linux-basics/README.md",
   "children": [
    {
@@ -853,7 +858,7 @@
   ]
  },
  {
-  "title": "Linux - Main System Information",
+  "title": "Linux - Main System Information (formerly “Main System Information”)",
   "path": "linux-hardening/main-system-information/README.md",
   "children": [
    {
@@ -897,7 +902,7 @@
     "children": []
    },
    {
-    "title": "Linux - Kernel/LPE/CVE Material",
+    "title": "Linux - Kernel/LPE/CVE Material (formerly “Kernel/LPE/CVE material”)",
     "path": "linux-hardening/main-system-information/kernel-lpe-cves/README.md",
     "children": [
      {
@@ -911,12 +916,17 @@
       "children": []
      },
      {
+      "title": "Open vSwitch Forwarded SKB Marker Stripping to ESP Page Cache Writes",
+      "path": "linux-hardening/main-system-information/kernel-lpe-cves/open-vswitch-forwarded-skb-marker-stripping-esp-page-cache-write.md",
+      "children": []
+     },
+     {
       "title": "Linux - Posix Cpu Timers Toctou Cve 2025 38352",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/posix-cpu-timers-toctou-cve-2025-38352.md",
       "children": []
      },
      {
-      "title": "Linux - Ptrace Exit Race Pidfd Getfd Fd Theft",
+      "title": "Linux - Ptrace Exit Race Pidfd Getfd Fd Theft (formerly “Linux Ptrace Exit Race Pidfd Getfd Fd Theft”)",
       "path": "linux-hardening/main-system-information/kernel-lpe-cves/linux-ptrace-exit-race-pidfd_getfd-fd-theft.md",
       "children": []
      }
@@ -925,7 +935,7 @@
   ]
  },
  {
-  "title": "Linux - User Information",
+  "title": "Linux - User Information (formerly “User Information”)",
   "path": "linux-hardening/user-information/README.md",
   "children": [
    {
@@ -962,7 +972,7 @@
   ]
  },
  {
-  "title": "Linux - Interesting Files & Permissions",
+  "title": "Linux - Interesting Files & Permissions (formerly “Interesting Files & Permissions”)",
   "path": "linux-hardening/interesting-files-permissions/README.md",
   "children": [
    {
@@ -1008,7 +1018,7 @@
   ]
  },
  {
-  "title": "Linux - Network Information",
+  "title": "Linux - Network Information (formerly “Network Information”)",
   "path": "linux-hardening/network-information/README.md",
   "children": [
    {
@@ -1034,7 +1044,7 @@
   ]
  },
  {
-  "title": "Linux - Software Information",
+  "title": "Linux - Software Information (formerly “Software Information”)",
   "path": "linux-hardening/software-information/README.md",
   "children": [
    {
@@ -1080,7 +1090,7 @@
   ]
  },
  {
-  "title": "Linux - Processes, Crontab, Systemd, D-Bus",
+  "title": "Linux - Processes, Crontab, Systemd, D-Bus (formerly “Processes, Crontab, Systemd, D-Bus”)",
   "path": "linux-hardening/processes-crontab-systemd-dbus/README.md",
   "children": [
    {
@@ -1106,7 +1116,7 @@
   ]
  },
  {
-  "title": "Linux - Containers, Namespaces",
+  "title": "Linux - Containers, Namespaces (formerly “Containers, Namespaces”)",
   "path": "linux-hardening/containers-namespaces/README.md",
   "children": [
    {
@@ -1260,12 +1270,17 @@
   ]
  },
  {
-  "title": "Linux - Post-Exploitation",
+  "title": "Linux - Post-Exploitation (formerly “Post-Exploitation”)",
   "path": "linux-hardening/post-exploitation/README.md",
   "children": [
    {
     "title": "Linux - Cloud Instance Metadata",
     "path": "linux-hardening/post-exploitation/cloud-instance-metadata.md",
+    "children": []
+   },
+   {
+    "title": "Linux Fileless Execution",
+    "path": "linux-hardening/post-exploitation/linux-fileless-execution.md",
     "children": []
    },
    {
@@ -1429,6 +1444,11 @@
      {
       "title": "macOS Function Hooking",
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-function-hooking.md",
+      "children": []
+     },
+     {
+      "title": "ARM64/ARM64e Call-Stack Spoofing",
+      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/arm64-arm64e-call-stack-spoofing.md",
       "children": []
      },
      {
@@ -1758,6 +1778,11 @@
   "children": []
  },
  {
+  "title": "Visual Studio VSIX Extension Abuse",
+  "path": "windows-hardening/visual-studio-vsix-extension-abuse.md",
+  "children": []
+ },
+ {
   "title": "Windows Local Privilege Escalation",
   "path": "windows-hardening/windows-local-privilege-escalation/README.md",
   "children": [
@@ -1779,6 +1804,11 @@
    {
     "title": "Kernel Race Condition Object Manager Slowdown",
     "path": "windows-hardening/windows-local-privilege-escalation/kernel-race-condition-object-manager-slowdown.md",
+    "children": []
+   },
+   {
+    "title": "Windows MDL-Mapped Buffer Double-Fetch",
+    "path": "windows-hardening/windows-local-privilege-escalation/cloud-files-placeholder-name-toctou.md",
     "children": []
    },
    {
@@ -2141,7 +2171,7 @@
     "children": []
    },
    {
-    "title": "Sccm Management Point Relay Sql Policy Secrets",
+    "title": "SCCM / MECM Abuse",
     "path": "windows-hardening/active-directory-methodology/sccm-management-point-relay-sql-policy-secrets.md",
     "children": []
    },
@@ -2289,7 +2319,13 @@
  {
   "title": "Antivirus (AV) Bypass",
   "path": "windows-hardening/av-bypass.md",
-  "children": []
+  "children": [
+   {
+    "title": "Virtualized Payload Execution and Custom VM Evasion",
+    "path": "windows-hardening/virtualized-payload-execution.md",
+    "children": []
+   }
+  ]
  },
  {
   "title": "Cobalt Strike",
@@ -2341,6 +2377,11 @@
     "children": []
    },
    {
+    "title": "Android SELinux Policy Analysis",
+    "path": "mobile-pentesting/android-app-pentesting/android-selinux-policy-analysis.md",
+    "children": []
+   },
+   {
     "title": "Android Enterprise Work Profile Bypass",
     "path": "mobile-pentesting/android-app-pentesting/android-enterprise-work-profile-bypass.md",
     "children": []
@@ -2353,6 +2394,11 @@
    {
     "title": "Android Physical Attacks",
     "path": "mobile-pentesting/android-app-pentesting/android-physical-attacks.md",
+    "children": []
+   },
+   {
+    "title": "Android SELinux Domains, AVC Denials and Policy Manipulation",
+    "path": "mobile-pentesting/android-app-pentesting/android-selinux-domains-and-policy-manipulation.md",
     "children": []
    },
    {
@@ -2520,6 +2566,11 @@
    {
     "title": "Tapjacking",
     "path": "mobile-pentesting/android-app-pentesting/tapjacking.md",
+    "children": []
+   },
+   {
+    "title": "Telegram Mini App Privacy Analysis",
+    "path": "mobile-pentesting/android-app-pentesting/telegram-mini-app-privacy-analysis.md",
     "children": []
    },
    {
@@ -2778,6 +2829,11 @@
     "children": []
    },
    {
+    "title": "Adobe ColdFusion",
+    "path": "network-services-pentesting/pentesting-web/adobe-coldfusion.md",
+    "children": []
+   },
+   {
     "title": "Angular",
     "path": "network-services-pentesting/pentesting-web/angular.md",
     "children": []
@@ -2816,6 +2872,11 @@
    {
     "title": "CGI",
     "path": "network-services-pentesting/pentesting-web/cgi.md",
+    "children": []
+   },
+   {
+    "title": "Citrix NetScaler ADC and Gateway",
+    "path": "network-services-pentesting/pentesting-web/citrix-netscaler.md",
     "children": []
    },
    {
@@ -3483,6 +3544,11 @@
   "children": []
  },
  {
+  "title": "4000,10080 - Pentesting TiDB",
+  "path": "network-services-pentesting/4000-10080-pentesting-tidb.md",
+  "children": []
+ },
+ {
   "title": "4369 - Pentesting Erlang Port Mapper Daemon (epmd)",
   "path": "network-services-pentesting/4369-pentesting-erlang-port-mapper-daemon-epmd.md",
   "children": []
@@ -3573,7 +3639,7 @@
   "children": []
  },
  {
-  "title": "8089 - Pentesting Splunkd",
+  "title": "8000, 8089 - Pentesting Splunk (formerly “8089 - Pentesting Splunkd”)",
   "path": "network-services-pentesting/8089-splunkd.md",
   "children": []
  },
@@ -3666,6 +3732,11 @@
  {
   "title": "50030,50060,50070,50075,50090 - Pentesting Hadoop",
   "path": "network-services-pentesting/50030-50060-50070-50075-50090-pentesting-hadoop.md",
+  "children": []
+ },
+ {
+  "title": "55555 - Pentesting SolarWinds Access Rights Manager gRPC",
+  "path": "network-services-pentesting/55555-pentesting-solarwinds-arm.md",
   "children": []
  },
  {
@@ -5046,6 +5117,11 @@
     "title": "QEMU/KVM VM Escape Chains",
     "path": "binary-exploitation/qemu-kvm-vm-escape-chains.md",
     "children": []
+   },
+   {
+    "title": "VirtualBox VMSVGA COTable UAF Escape",
+    "path": "binary-exploitation/virtualbox-vmsvga-cotable-uaf-escape.md",
+    "children": []
    }
   ]
  },
@@ -5055,13 +5131,33 @@
   "children": []
  },
  {
+  "title": "Android Kernel SELinux Bypass After Arbitrary R/W",
+  "path": "binary-exploitation/linux-kernel-exploitation/android-kernel-selinux-bypass.md",
+  "children": []
+ },
+ {
   "title": "Af Unix Msg Oob Uaf Skb Primitives",
   "path": "binary-exploitation/linux-kernel-exploitation/af-unix-msg-oob-uaf-skb-primitives.md",
   "children": []
  },
  {
+  "title": "AF_ALG concurrent-writer scatterlist underflow",
+  "path": "binary-exploitation/linux-kernel-exploitation/af-alg-concurrent-writer-scatterlist-oob.md",
+  "children": []
+ },
+ {
+  "title": "Android Binder IPC Internals and Kernel Vulnerability Research",
+  "path": "binary-exploitation/linux-kernel-exploitation/android-binder-ipc-internals-kernel-vulnerability-research.md",
+  "children": []
+ },
+ {
   "title": "Arm64 Static Linear Map Kaslr Bypass",
   "path": "binary-exploitation/linux-kernel-exploitation/arm64-static-linear-map-kaslr-bypass.md",
+  "children": []
+ },
+ {
+  "title": "Linux USB Audio Descriptor OOB Reads to KASLR Leaks",
+  "path": "binary-exploitation/linux-kernel-exploitation/usb-audio-descriptor-oob-kaslr-leak.md",
   "children": []
  },
  {
@@ -5075,6 +5171,11 @@
   "children": []
  },
  {
+  "title": "net/sched action-IDR UAF exploitation (CVE-2026-53264)",
+  "path": "binary-exploitation/linux-kernel-exploitation/net-sched-action-idr-uaf-cve-2026-53264.md",
+  "children": []
+ },
+ {
   "title": "Pixel Bigwave Bigo Job Timeout Uaf Kernel Write",
   "path": "binary-exploitation/linux-kernel-exploitation/pixel-bigwave-bigo-job-timeout-uaf-kernel-write.md",
   "children": []
@@ -5082,6 +5183,11 @@
  {
   "title": "Linux kernel exploitation - toctou",
   "path": "binary-exploitation/linux-kernel-exploitation/posix-cpu-timers-toctou-cve-2025-38352.md",
+  "children": []
+ },
+ {
+  "title": "Qualcomm KGSL VBO bind race to physical-page UAF",
+  "path": "binary-exploitation/linux-kernel-exploitation/qualcomm-kgsl-vbo-bind-race-physical-uaf.md",
   "children": []
  },
  {
@@ -5095,9 +5201,20 @@
   "children": []
  },
  {
+  "title": "Windows RIO registered-buffer UAF to kernel R/W",
+  "path": "binary-exploitation/windows-kernel-exploitation/afd-rio-buffer-uaf.md",
+  "children": []
+ },
+ {
   "title": "Windows Exploiting (Basic Guide - OSCP lvl)",
   "path": "binary-exploitation/windows-exploiting-basic-guide-oscp-lvl.md",
-  "children": []
+  "children": [
+   {
+    "title": "Windows Kernel Type Confusion to NPFS Arbitrary R/W",
+    "path": "binary-exploitation/windows-kernel-type-confusion-to-npfs-arbitrary-rw.md",
+    "children": []
+   }
+  ]
  },
  {
   "title": "Windows Vectored Overloading",
@@ -5116,6 +5233,11 @@
    {
     "title": "ios CVE-2021-30807-IOMobileFrameBuffer",
     "path": "binary-exploitation/ios-exploiting/CVE-2021-30807-IOMobileFrameBuffer.md",
+    "children": []
+   },
+   {
+    "title": "CoreGraphics PDF/TrueType Glyph Rasterizer OOB Write",
+    "path": "binary-exploitation/ios-exploiting/coregraphics-pdf-truetype-glyph-rasterizer-oob-write.md",
     "children": []
    },
    {
@@ -5139,8 +5261,18 @@
     "children": []
    },
    {
+    "title": "iOS Driver Embedded Queue-Node UAF",
+    "path": "binary-exploitation/ios-exploiting/ios-driver-embedded-queue-node-uaf.md",
+    "children": []
+   },
+   {
     "title": "Webkit Dfg Store Barrier Uaf Angle Oob",
     "path": "binary-exploitation/ios-exploiting/webkit-dfg-store-barrier-uaf-angle-oob.md",
+    "children": []
+   },
+   {
+    "title": "Webkit Jsc Dfg Slow Path Register Spill",
+    "path": "binary-exploitation/ios-exploiting/webkit-jsc-dfg-slow-path-register-spill.md",
     "children": []
    },
    {
@@ -5165,8 +5297,18 @@
     "children": []
    },
    {
-    "title": "AI Security Methodology",
+    "title": "AI Agent Security Methodology",
+    "path": "AI/AI-Agent-Security-Methodology.md",
+    "children": []
+   },
+   {
+    "title": "AI Deep Learning / AI Security Methodology",
     "path": "AI/AI-Deep-Learning.md",
+    "children": []
+   },
+   {
+    "title": "Mechanistic-Interpretability-Guided Adversarial Attacks",
+    "path": "AI/AI-Mechanistic-Interpretability-Adversarial-Attacks.md",
     "children": []
    },
    {
@@ -5310,6 +5452,11 @@
    {
     "title": "Blobrunner",
     "path": "reversing/reversing-tools-basic-methods/blobrunner.md",
+    "children": []
+   },
+   {
+    "title": "Windows Kernel Debugging with KernelFlirt",
+    "path": "reversing/reversing-tools-basic-methods/windows-kernel-debugging-kernelflirt.md",
     "children": []
    }
   ]
