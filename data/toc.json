@@ -573,11 +573,6 @@
     "children": []
    },
    {
-    "title": "venv",
-    "path": "generic-methodologies-and-resources/python/venv.md",
-    "children": []
-   },
-   {
     "title": "Web Requests",
     "path": "generic-methodologies-and-resources/python/web-requests.md",
     "children": []
@@ -2148,11 +2143,6 @@
     "children": []
    },
    {
-    "title": "RDPexec",
-    "path": "windows-hardening/lateral-movement/rdpexec.md",
-    "children": []
-   },
-   {
     "title": "WinRM",
     "path": "windows-hardening/lateral-movement/winrm.md",
     "children": []
@@ -3136,6 +3126,21 @@
     "title": "Wordpress",
     "path": "network-services-pentesting/pentesting-web/wordpress.md",
     "children": []
+   },
+   {
+    "title": "WSGI / uWSGI",
+    "path": "network-services-pentesting/pentesting-web/wsgi.md",
+    "children": []
+   },
+   {
+    "title": "Zabbix",
+    "path": "network-services-pentesting/pentesting-web/zabbix.md",
+    "children": []
+   },
+   {
+    "title": "ZoneMinder, motionEye & Motion",
+    "path": "network-services-pentesting/pentesting-web/zoneminder-motioneye-motion.md",
+    "children": []
    }
   ]
  },
@@ -3151,21 +3156,6 @@
    {
     "title": "Harvesting tickets from Linux",
     "path": "network-services-pentesting/pentesting-kerberos-88/harvesting-tickets-from-linux.md",
-    "children": []
-   },
-   {
-    "title": "Wsgi",
-    "path": "network-services-pentesting/pentesting-web/wsgi.md",
-    "children": []
-   },
-   {
-    "title": "Zabbix",
-    "path": "network-services-pentesting/pentesting-web/zabbix.md",
-    "children": []
-   },
-   {
-    "title": "Zoneminder Motioneye Motion",
-    "path": "network-services-pentesting/pentesting-web/zoneminder-motioneye-motion.md",
     "children": []
    }
   ]
@@ -4616,6 +4606,11 @@
     "children": []
    },
    {
+    "title": "ARM CoreSight Instruction Tracing over SWO",
+    "path": "hardware-physical-access/hardware-hacking/arm-coresight-instruction-tracing.md",
+    "children": []
+   },
+   {
     "title": "SPI",
     "path": "hardware-physical-access/hardware-hacking/spi.md",
     "children": []
@@ -4644,6 +4639,11 @@
    {
     "title": "Sub-GHz RF",
     "path": "hardware-physical-access/radio-hacking/sub-ghz-rf.md",
+    "children": []
+   },
+   {
+    "title": "VSAT Forward-Link Signal Injection",
+    "path": "hardware-physical-access/radio-hacking/vsat-forward-link-injection.md",
     "children": []
    },
    {
@@ -5302,6 +5302,21 @@
   "children": []
  },
  {
+  "title": "Windows UAS REPORT LUNS cached-table OOB write",
+  "path": "binary-exploitation/windows-kernel-exploitation/uasp-report-luns-cache-size-oob-write.md",
+  "children": []
+ },
+ {
+  "title": "Windows USB MIDI packet-size pool overflow",
+  "path": "binary-exploitation/windows-kernel-exploitation/usb-midi-packet-size-pool-overflow.md",
+  "children": []
+ },
+ {
+  "title": "Windows Userland Heap Grooming (x86 NT Heap)",
+  "path": "binary-exploitation/windows-userland-heap-grooming.md",
+  "children": []
+ },
+ {
   "title": "Windows Exploiting (Basic Guide - OSCP lvl)",
   "path": "binary-exploitation/windows-exploiting-basic-guide-oscp-lvl.md",
   "children": [
@@ -5385,6 +5400,11 @@
    {
     "title": "Ai Assisted Fuzzing And Vulnerability Discovery",
     "path": "AI/AI-Assisted-Fuzzing-and-Vulnerability-Discovery.md",
+    "children": []
+   },
+   {
+    "title": "AI-Assisted Source Review and Vulnerability Validation",
+    "path": "AI/AI-Assisted-Source-Review-and-Vulnerability-Validation.md",
     "children": []
    },
    {
