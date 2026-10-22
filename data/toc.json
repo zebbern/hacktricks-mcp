@@ -25,6 +25,11 @@
   "children": []
  },
  {
+  "title": "Post-Exploitation Collection Tools",
+  "path": "generic-methodologies-and-resources/post-exploitation-collection-tools.md",
+  "children": []
+ },
+ {
   "title": "Fuzzing Methodology",
   "path": "generic-methodologies-and-resources/fuzzing.md",
   "children": []
@@ -713,11 +718,6 @@
  {
   "title": "Brute Force - CheatSheet",
   "path": "generic-hacking/brute-force.md",
-  "children": []
- },
- {
-  "title": "Esim Javacard Exploitation",
-  "path": "generic-hacking/esim-javacard-exploitation.md",
   "children": []
  },
  {
@@ -2227,6 +2227,11 @@
   "children": []
  },
  {
+  "title": "eSIM / Java Card VM Exploitation",
+  "path": "mobile-pentesting/esim-javacard-exploitation.md",
+  "children": []
+ },
+ {
   "title": "Android APK Checklist",
   "path": "mobile-pentesting/android-checklist.md",
   "children": []
@@ -2886,6 +2891,11 @@
     "children": []
    },
    {
+    "title": "Java Servlet-Filter Memory Shells",
+    "path": "network-services-pentesting/pentesting-web/java-servlet-filter-memory-shells.md",
+    "children": []
+   },
+   {
     "title": "Laravel",
     "path": "network-services-pentesting/pentesting-web/laravel.md",
     "children": []
@@ -3161,6 +3171,11 @@
   ]
  },
  {
+  "title": "102 - Pentesting IEC 61850 MMS",
+  "path": "network-services-pentesting/102-pentesting-iec-61850-mms.md",
+  "children": []
+ },
+ {
   "title": "110,995 - Pentesting POP",
   "path": "network-services-pentesting/pentesting-pop.md",
   "children": []
@@ -3369,6 +3384,11 @@
   "children": []
  },
  {
+  "title": "2404 - Pentesting IEC 60870-5-104",
+  "path": "network-services-pentesting/2404-pentesting-iec-60870-5-104.md",
+  "children": []
+ },
+ {
   "title": "3128 - Pentesting Squid",
   "path": "network-services-pentesting/3128-pentesting-squid.md",
   "children": []
@@ -3560,6 +3580,11 @@
   "children": []
  },
  {
+  "title": "20000 - Pentesting DNP3",
+  "path": "network-services-pentesting/20000-pentesting-dnp3.md",
+  "children": []
+ },
+ {
   "title": "24007,24008,24009,49152 - Pentesting GlusterFS",
   "path": "network-services-pentesting/24007-24008-24009-49152-pentesting-glusterfs.md",
   "children": []
@@ -3587,6 +3612,11 @@
  {
   "title": "47808/udp - Pentesting BACNet",
   "path": "network-services-pentesting/47808-udp-bacnet.md",
+  "children": []
+ },
+ {
+  "title": "PROFINET - Pentesting PROFINET IO",
+  "path": "network-services-pentesting/pentesting-profinet.md",
   "children": []
  },
  {
@@ -5583,6 +5613,11 @@
   ]
  },
  {
+  "title": "Windows Exception-Driven Control Flow and Anti-Debugging",
+  "path": "reversing/windows-exception-driven-control-flow.md",
+  "children": []
+ },
+ {
   "title": "Common API used in Malware",
   "path": "reversing/common-api-used-in-malware.md",
   "children": []
@@ -5676,16 +5711,6 @@
  {
   "title": "More Tools",
   "path": "todo/more-tools.md",
-  "children": []
- },
- {
-  "title": "Other Web Tricks",
-  "path": "todo/other-web-tricks.md",
-  "children": []
- },
- {
-  "title": "Post Exploitation",
-  "path": "todo/post-exploitation.md",
   "children": []
  }
 ]
