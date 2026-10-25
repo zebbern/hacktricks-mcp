@@ -745,16 +745,16 @@
     "children": []
    },
    {
-    "title": "Expose local to the internet",
-    "path": "generic-hacking/reverse-shells/expose-local-to-the-internet.md",
-    "children": []
-   },
-   {
     "title": "Full TTYs",
     "path": "generic-hacking/reverse-shells/full-ttys.md",
     "children": []
    }
   ]
+ },
+ {
+  "title": "Expose Local Services to the Internet",
+  "path": "generic-hacking/expose-local-to-the-internet.md",
+  "children": []
  },
  {
   "title": "Search Exploits",
@@ -2769,6 +2769,11 @@
     "children": []
    },
    {
+    "title": "Exposed Debug, Metrics and Admin Endpoints",
+    "path": "network-services-pentesting/pentesting-web/debug-and-admin-endpoints.md",
+    "children": []
+   },
+   {
     "title": "Django",
     "path": "network-services-pentesting/pentesting-web/django.md",
     "children": []
@@ -3078,8 +3083,23 @@
     "children": []
    },
    {
+    "title": "SSR Meta-Frameworks (Nuxt, SvelteKit, Remix / React Router, Vite)",
+    "path": "network-services-pentesting/pentesting-web/ssr-meta-frameworks.md",
+    "children": []
+   },
+   {
     "title": "Spring Actuators",
     "path": "network-services-pentesting/pentesting-web/spring-actuators.md",
+    "children": []
+   },
+   {
+    "title": "Spring Data Binding ClassLoader Manipulation",
+    "path": "network-services-pentesting/pentesting-web/spring-data-binding-classloader-manipulation.md",
+    "children": []
+   },
+   {
+    "title": "Swagger UI and OpenAPI Docs",
+    "path": "network-services-pentesting/pentesting-web/swagger-openapi-ui.md",
     "children": []
    },
    {
@@ -3273,13 +3293,8 @@
   "children": []
  },
  {
-  "title": "513 - Pentesting Rlogin",
+  "title": "513, 514 - Pentesting Rlogin and Rsh",
   "path": "network-services-pentesting/pentesting-rlogin.md",
-  "children": []
- },
- {
-  "title": "514 - Pentesting Rsh",
-  "path": "network-services-pentesting/pentesting-rsh.md",
   "children": []
  },
  {
@@ -3763,6 +3778,11 @@
   "children": []
  },
  {
+  "title": "Apache Commons Text String Interpolation Injection",
+  "path": "pentesting-web/commons-text-string-interpolation.md",
+  "children": []
+ },
+ {
   "title": "Content Security Policy (CSP) Bypass",
   "path": "pentesting-web/content-security-policy-csp-bypass/README.md",
   "children": [
@@ -3868,6 +3888,16 @@
    {
     "title": "Basic Java Deserialization (ObjectInputStream, readObject)",
     "path": "pentesting-web/deserialization/basic-java-deserialization-objectinputstream-readobject.md",
+    "children": []
+   },
+   {
+    "title": "Apache Shiro rememberMe Cookie Deserialization",
+    "path": "pentesting-web/deserialization/java-apache-shiro-rememberme.md",
+    "children": []
+   },
+   {
+    "title": "Java Hessian, Burlap and AMF Deserialization",
+    "path": "pentesting-web/deserialization/java-hessian-burlap-amf-deserialization.md",
     "children": []
    },
    {
@@ -4194,6 +4224,11 @@
   "children": []
  },
  {
+  "title": "Server-Side JavaScript Injection (Node.js eval, Function, vm)",
+  "path": "pentesting-web/server-side-javascript-injection.md",
+  "children": []
+ },
+ {
   "title": "Soap Jax Ws Threadlocal Auth Bypass",
   "path": "pentesting-web/soap-jax-ws-threadlocal-auth-bypass.md",
   "children": []
@@ -4368,6 +4403,11 @@
  {
   "title": "XXE - XEE - XML External Entity",
   "path": "pentesting-web/xxe-xee-xml-external-entity.md",
+  "children": []
+ },
+ {
+  "title": "XML Injection (Tag Injection)",
+  "path": "pentesting-web/xml-injection.md",
   "children": []
  },
  {
@@ -5443,6 +5483,11 @@
     "children": []
    },
    {
+    "title": "LLM Gateway Trust Boundaries",
+    "path": "AI/AI-LLM-Gateway-Security.md",
+    "children": []
+   },
+   {
     "title": "AI Agent Security Methodology",
     "path": "AI/AI-Agent-Security-Methodology.md",
     "children": []
@@ -5463,6 +5508,11 @@
     "children": []
    },
    {
+    "title": "A2A Protocol Security",
+    "path": "AI/AI-A2A-Protocol.md",
+    "children": []
+   },
+   {
     "title": "AI Model Data Preparation",
     "path": "AI/AI-Model-Data-Preparation-and-Evaluation.md",
     "children": []
@@ -5470,6 +5520,11 @@
    {
     "title": "AI Model Tools and Platforms",
     "path": "AI/AI-Model-Tools-and-Platforms.md",
+    "children": []
+   },
+   {
+    "title": "Exposed Self-Hosted AI Services",
+    "path": "AI/AI-Exposed-Self-Hosted-AI-Services.md",
     "children": []
    },
    {
