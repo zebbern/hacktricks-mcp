@@ -2610,6 +2610,11 @@
   "children": []
  },
  {
+  "title": "3478 - WebRTC TURN Relay",
+  "path": "network-services-pentesting/3478-pentesting-turn.md",
+  "children": []
+ },
+ {
   "title": "Pentesting VoIP",
   "path": "network-services-pentesting/pentesting-voip/README.md",
   "children": [
@@ -2936,6 +2941,11 @@
     "children": []
    },
    {
+    "title": "React",
+    "path": "network-services-pentesting/pentesting-web/react.md",
+    "children": []
+   },
+   {
     "title": "Sitecore",
     "path": "network-services-pentesting/pentesting-web/sitecore/README.md",
     "children": []
@@ -3078,6 +3088,11 @@
     "children": []
    },
    {
+    "title": "Salesforce",
+    "path": "network-services-pentesting/pentesting-web/salesforce.md",
+    "children": []
+   },
+   {
     "title": "ServiceNow",
     "path": "network-services-pentesting/pentesting-web/servicenow.md",
     "children": []
@@ -3098,6 +3113,11 @@
     "children": []
    },
    {
+    "title": "Supabase & PostgREST",
+    "path": "network-services-pentesting/pentesting-web/supabase-postgrest.md",
+    "children": []
+   },
+   {
     "title": "Swagger UI and OpenAPI Docs",
     "path": "network-services-pentesting/pentesting-web/swagger-openapi-ui.md",
     "children": []
@@ -3108,7 +3128,7 @@
     "children": []
    },
    {
-    "title": "Traefik HTTP/3 Slow-Body Timeout Testing",
+    "title": "Traefik",
     "path": "network-services-pentesting/pentesting-web/traefik.md",
     "children": []
    },
@@ -3706,6 +3726,11 @@
   "children": []
  },
  {
+  "title": "Application-Layer DoS (Unrestricted Resource Consumption)",
+  "path": "pentesting-web/application-layer-dos.md",
+  "children": []
+ },
+ {
   "title": "Browser Extension Pentesting Methodology",
   "path": "pentesting-web/browser-extension-pentesting-methodology/README.md",
   "children": [
@@ -3734,6 +3759,11 @@
  {
   "title": "Bypass Payment Process",
   "path": "pentesting-web/bypass-payment-process.md",
+  "children": []
+ },
+ {
+  "title": "Business Logic Vulnerabilities",
+  "path": "pentesting-web/business-logic-vulnerabilities.md",
   "children": []
  },
  {
@@ -3792,6 +3822,11 @@
     "children": []
    }
   ]
+ },
+ {
+  "title": "Content Spoofing (Text and HTML Injection)",
+  "path": "pentesting-web/content-spoofing-text-injection.md",
+  "children": []
  },
  {
   "title": "Cookies Hacking",
@@ -4061,6 +4096,11 @@
   ]
  },
  {
+  "title": "HTTP/2 Protocol-Level DoS (CONTINUATION Flood, MadeYouReset)",
+  "path": "pentesting-web/http2-protocol-dos.md",
+  "children": []
+ },
+ {
   "title": "HTTP Response Smuggling / Desync",
   "path": "pentesting-web/http-response-smuggling-desync.md",
   "children": []
@@ -4183,6 +4223,11 @@
   "children": []
  },
  {
+  "title": "Reflected File Download (RFD)",
+  "path": "pentesting-web/reflected-file-download.md",
+  "children": []
+ },
+ {
   "title": "Registration & Takeover Vulnerabilities",
   "path": "pentesting-web/registration-vulnerabilities.md",
   "children": []
@@ -4266,6 +4311,16 @@
    {
     "title": "Cypher Injection (neo4j)",
     "path": "pentesting-web/sql-injection/cypher-injection-neo4j.md",
+    "children": []
+   },
+   {
+    "title": "HQL Injection (Hibernate)",
+    "path": "pentesting-web/sql-injection/hql-jpql-injection.md",
+    "children": []
+   },
+   {
+    "title": "SQLite Injection",
+    "path": "pentesting-web/sql-injection/sqlite-injection.md",
     "children": []
    },
    {
@@ -4378,6 +4433,11 @@
  {
   "title": "UUID Insecurities",
   "path": "pentesting-web/uuid-insecurities.md",
+  "children": []
+ },
+ {
+  "title": "Webhook Security (Inbound Webhook Forgery)",
+  "path": "pentesting-web/webhook-security.md",
   "children": []
  },
  {
