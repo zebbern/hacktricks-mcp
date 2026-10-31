@@ -1389,11 +1389,6 @@
       "children": []
      },
      {
-      "title": "macOS Julia Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-julia-applications-injection.md",
-      "children": []
-     },
-     {
       "title": "macOS Library Injection",
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-library-injection/README.md",
       "children": [
@@ -1410,13 +1405,13 @@
       ]
      },
      {
-      "title": "macOS Perl Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-perl-applications-injection.md",
+      "title": "macOS Interpreter Startup-File Injection (PHP, Lua, Julia, Octave)",
+      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-interpreter-startup-file-injection.md",
       "children": []
      },
      {
-      "title": "macOS PHP Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-php-applications-injection.md",
+      "title": "macOS Perl Applications Injection",
+      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-perl-applications-injection.md",
       "children": []
      },
      {
@@ -1445,18 +1440,8 @@
       "children": []
      },
      {
-      "title": "macOS Lua Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-lua-applications-injection.md",
-      "children": []
-     },
-     {
       "title": "macOS Erlang and Elixir Applications Injection",
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-erlang-elixir-applications-injection.md",
-      "children": []
-     },
-     {
-      "title": "macOS GNU Octave Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-octave-applications-injection.md",
       "children": []
      },
      {
@@ -5429,6 +5414,11 @@
  {
   "title": "Windows RIO registered-buffer UAF to kernel R/W",
   "path": "binary-exploitation/windows-kernel-exploitation/afd-rio-buffer-uaf.md",
+  "children": []
+ },
+ {
+  "title": "Windows File Handle-Table Object Redirection",
+  "path": "binary-exploitation/windows-kernel-exploitation/file-handle-table-object-redirection.md",
   "children": []
  },
  {
