@@ -4535,8 +4535,8 @@
     "children": []
    },
    {
-    "title": "Steal Info JS",
-    "path": "pentesting-web/xss-cross-site-scripting/steal-info-js.md",
+    "title": "XSS Information Exfiltration Payload",
+    "path": "pentesting-web/xss-cross-site-scripting/xss-information-exfiltration-payload.md",
     "children": []
    },
    {
@@ -5434,6 +5434,11 @@
  {
   "title": "Windows Userland Heap Grooming (x86 NT Heap)",
   "path": "binary-exploitation/windows-userland-heap-grooming.md",
+  "children": []
+ },
+ {
+  "title": "Windows VBS Enclave Pointer Validation and VTL1 Code Reuse",
+  "path": "binary-exploitation/windows-vbs-enclave-exploitation.md",
   "children": []
  },
  {
