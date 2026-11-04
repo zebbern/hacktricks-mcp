@@ -1405,7 +1405,7 @@
       ]
      },
      {
-      "title": "macOS Interpreter Startup-File Injection (PHP, Lua, Julia, Octave)",
+      "title": "macOS Interpreter Startup Injection (PHP, Lua, Julia, Octave, R, Ruby, Erlang/Elixir)",
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-interpreter-startup-file-injection.md",
       "children": []
      },
@@ -1425,23 +1425,8 @@
       "children": []
      },
      {
-      "title": "macOS R Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-r-applications-injection.md",
-      "children": []
-     },
-     {
-      "title": "macOS Ruby Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-ruby-applications-injection.md",
-      "children": []
-     },
-     {
       "title": "macOS Vim/Neovim Applications Injection",
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-vim-applications-injection.md",
-      "children": []
-     },
-     {
-      "title": "macOS Erlang and Elixir Applications Injection",
-      "path": "macos-hardening/macos-security-and-privilege-escalation/macos-proces-abuse/macos-erlang-elixir-applications-injection.md",
       "children": []
      },
      {
@@ -3852,13 +3837,7 @@
  {
   "title": "Dangling Markup - HTML scriptless injection",
   "path": "pentesting-web/dangling-markup-html-scriptless-injection/README.md",
-  "children": [
-   {
-    "title": "SS-Leaks",
-    "path": "pentesting-web/dangling-markup-html-scriptless-injection/ss-leaks.md",
-    "children": []
-   }
-  ]
+  "children": []
  },
  {
   "title": "DApps - Decentralized Applications",
@@ -4530,11 +4509,6 @@
     "children": []
    },
    {
-    "title": "Sniff Leak",
-    "path": "pentesting-web/xss-cross-site-scripting/sniff-leak.md",
-    "children": []
-   },
-   {
     "title": "XSS Information Exfiltration Payload",
     "path": "pentesting-web/xss-cross-site-scripting/xss-information-exfiltration-payload.md",
     "children": []
@@ -5012,6 +4986,11 @@
  {
   "title": "Array Indexing",
   "path": "binary-exploitation/array-indexing.md",
+  "children": []
+ },
+ {
+  "title": "PHP Request OOM Bailout and Stale State",
+  "path": "binary-exploitation/php-request-oom-bailout-and-stale-state.md",
   "children": []
  },
  {
