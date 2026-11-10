@@ -2169,6 +2169,11 @@
   "path": "windows-hardening/basic-powershell-for-pentesters/README.md",
   "children": [
    {
+    "title": "Windows Enumeration with .NET",
+    "path": "windows-hardening/basic-powershell-for-pentesters/dotnet-enumeration.md",
+    "children": []
+   },
+   {
     "title": "PowerView/SharpView",
     "path": "windows-hardening/basic-powershell-for-pentesters/powerview.md",
     "children": []
@@ -4005,13 +4010,7 @@
  {
   "title": "File Upload",
   "path": "pentesting-web/file-upload/README.md",
-  "children": [
-   {
-    "title": "PDF Upload - XXE and CORS bypass",
-    "path": "pentesting-web/file-upload/pdf-upload-xxe-and-cors-bypass.md",
-    "children": []
-   }
-  ]
+  "children": []
  },
  {
   "title": "Formula/CSV/Doc/LaTeX/GhostScript Injection",
@@ -4564,11 +4563,6 @@
     "path": "pentesting-web/xs-search/css-injection/README.md",
     "children": [
      {
-      "title": "CSS Injection Code",
-      "path": "pentesting-web/xs-search/css-injection/css-injection-code.md",
-      "children": []
-     },
-     {
       "title": "LESS Code Injection",
       "path": "pentesting-web/xs-search/css-injection/less-code-injection.md",
       "children": []
@@ -5001,11 +4995,6 @@
     "title": "Format Strings - Arbitrary Read Example",
     "path": "binary-exploitation/format-strings/format-strings-arbitrary-read-example.md",
     "children": []
-   },
-   {
-    "title": "Format Strings Template",
-    "path": "binary-exploitation/format-strings/format-strings-template.md",
-    "children": []
    }
   ]
  },
@@ -5255,6 +5244,11 @@
  {
   "title": "Common Exploiting Problems",
   "path": "binary-exploitation/common-exploiting-problems.md",
+  "children": []
+ },
+ {
+  "title": "Brotli Block-Switch Decoder State Corruption",
+  "path": "binary-exploitation/brotli-block-switch-decoder-state-corruption.md",
   "children": [
    {
     "title": "FreeBSD Kernel Exploitation and VNET Jail Escape",
