@@ -337,6 +337,11 @@
   ]
  },
  {
+  "title": "GitHub Issues and Repository Files as a C2 Channel",
+  "path": "generic-methodologies-and-resources/github-issues-and-repository-files-c2.md",
+  "children": []
+ },
+ {
   "title": "Basic Forensic Methodology",
   "path": "generic-methodologies-and-resources/basic-forensic-methodology/README.md",
   "children": [
@@ -2631,8 +2636,8 @@
     "children": []
    },
    {
-    "title": "FTP Bounce - Download 2ºFTP file",
-    "path": "network-services-pentesting/pentesting-ftp/ftp-bounce-download-2oftp-file.md",
+    "title": "FTP Bounce - Cross-Protocol Relay and FTP File Retrieval",
+    "path": "network-services-pentesting/pentesting-ftp/ftp-bounce-protocol-relay.md",
     "children": []
    }
   ]
@@ -3025,11 +3030,6 @@
    {
     "title": "Proxmox VE",
     "path": "network-services-pentesting/pentesting-web/proxmox-ve.md",
-    "children": []
-   },
-   {
-    "title": "Python",
-    "path": "network-services-pentesting/pentesting-web/python.md",
     "children": []
    },
    {
@@ -3808,7 +3808,7 @@
     "children": []
    },
    {
-    "title": "Cookie Bomb",
+    "title": "Cookie Bomb Denial of Service",
     "path": "pentesting-web/hacking-with-cookies/cookie-bomb.md",
     "children": []
    }
@@ -4485,6 +4485,11 @@
    {
     "title": "Shadow DOM",
     "path": "pentesting-web/xss-cross-site-scripting/shadow-dom.md",
+    "children": []
+   },
+   {
+    "title": "SVG Sanitizer Bypasses",
+    "path": "pentesting-web/xss-cross-site-scripting/svg-sanitizer-bypasses.md",
     "children": []
    },
    {
