@@ -30,6 +30,11 @@
   "children": []
  },
  {
+  "title": "Third-Party Tools and Resources",
+  "path": "generic-methodologies-and-resources/third-party-tools-and-resources.md",
+  "children": []
+ },
+ {
   "title": "Fuzzing Methodology",
   "path": "generic-methodologies-and-resources/fuzzing.md",
   "children": []
@@ -2196,6 +2201,11 @@
   "path": "windows-hardening/av-bypass.md",
   "children": [
    {
+    "title": "Thread Name-Calling and Waiting Thread Hijacking",
+    "path": "windows-hardening/windows-process-injection-thread-name-calling-waiting-thread-hijacking.md",
+    "children": []
+   },
+   {
     "title": "Virtualized Payload Execution and Custom VM Evasion",
     "path": "windows-hardening/virtualized-payload-execution.md",
     "children": []
@@ -2734,20 +2744,14 @@
     "children": []
    },
    {
-    "title": "Bolt CMS",
-    "path": "network-services-pentesting/pentesting-web/bolt-cms.md",
+    "title": "BeyondTrust Remote Support MRS Origin Spoofing",
+    "path": "network-services-pentesting/pentesting-web/beyondtrust-remote-support-mrs-origin-spoofing.md",
     "children": []
    },
    {
-    "title": "Buckets",
-    "path": "network-services-pentesting/pentesting-web/buckets/README.md",
-    "children": [
-     {
-      "title": "Firebase Database",
-      "path": "network-services-pentesting/pentesting-web/buckets/firebase-database.md",
-      "children": []
-     }
-    ]
+    "title": "Bolt CMS",
+    "path": "network-services-pentesting/pentesting-web/bolt-cms.md",
+    "children": []
    },
    {
     "title": "CGI",
@@ -3621,6 +3625,11 @@
    {
     "title": "GraphQL API Security Testing",
     "path": "pentesting-web/graphql.md",
+    "children": []
+   },
+   {
+    "title": "Firebase Realtime Database Rules and REST Testing",
+    "path": "pentesting-web/firebase-realtime-database.md",
     "children": []
    }
   ]
@@ -5264,6 +5273,11 @@
   "children": []
  },
  {
+  "title": "Revit RFA OLE Compound File Exploitation",
+  "path": "binary-exploitation/revit-rfa-ole-compound-file-exploitation.md",
+  "children": []
+ },
+ {
   "title": "Brotli Block-Switch Decoder State Corruption",
   "path": "binary-exploitation/brotli-block-switch-decoder-state-corruption.md",
   "children": [
@@ -5713,11 +5727,6 @@
   "children": []
  },
  {
-  "title": "Word Macros",
-  "path": "reversing/word-macros.md",
-  "children": []
- },
- {
   "title": "Crypto",
   "path": "crypto/README.md",
   "children": []
@@ -5796,11 +5805,6 @@
  {
   "title": "Malware & Network Stego",
   "path": "stego/malware-and-network/README.md",
-  "children": []
- },
- {
-  "title": "More Tools",
-  "path": "todo/more-tools.md",
   "children": []
  }
 ]
