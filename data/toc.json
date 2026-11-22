@@ -1585,8 +1585,8 @@
       "path": "macos-hardening/macos-security-and-privilege-escalation/macos-security-protections/macos-fs-tricks/README.md",
       "children": [
        {
-        "title": "macOS xattr-acls extra stuff",
-        "path": "macos-hardening/macos-security-and-privilege-escalation/macos-security-protections/macos-fs-tricks/macos-xattr-acls-extra-stuff.md",
+        "title": "AppleDouble ACL Quarantine Bypass Reproduction",
+        "path": "macos-hardening/macos-security-and-privilege-escalation/macos-security-protections/macos-fs-tricks/macos-appledouble-acl-quarantine-bypass.md",
         "children": []
        }
       ]
@@ -3930,11 +3930,6 @@
     "children": []
    },
    {
-    "title": "Ruby Json Pollution",
-    "path": "pentesting-web/deserialization/ruby-_json-pollution.md",
-    "children": []
-   },
-   {
     "title": "Ruby Class Pollution",
     "path": "pentesting-web/deserialization/ruby-class-pollution.md",
     "children": []
@@ -4267,9 +4262,15 @@
     "children": []
    },
    {
-    "title": "Sqlmap",
+    "title": "SQLMap - Cheatsheet",
     "path": "pentesting-web/sql-injection/sqlmap.md",
-    "children": []
+    "children": [
+     {
+      "title": "Second Order Injection - SQLMap",
+      "path": "pentesting-web/sql-injection/sqlmap/second-order-injection-sqlmap.md",
+      "children": []
+     }
+    ]
    },
    {
     "title": "PostgreSQL injection",
@@ -4298,17 +4299,6 @@
      {
       "title": "RCE with PostgreSQL Extensions",
       "path": "pentesting-web/sql-injection/postgresql-injection/rce-with-postgresql-extensions.md",
-      "children": []
-     }
-    ]
-   },
-   {
-    "title": "SQLMap - CheatSheet",
-    "path": "pentesting-web/sql-injection/sqlmap/README.md",
-    "children": [
-     {
-      "title": "Second Order Injection - SQLMap",
-      "path": "pentesting-web/sql-injection/sqlmap/second-order-injection-sqlmap.md",
       "children": []
      }
     ]
@@ -5280,13 +5270,17 @@
  {
   "title": "Brotli Block-Switch Decoder State Corruption",
   "path": "binary-exploitation/brotli-block-switch-decoder-state-corruption.md",
-  "children": [
-   {
-    "title": "FreeBSD Kernel Exploitation and VNET Jail Escape",
-    "path": "binary-exploitation/freebsd-kernel-exploitation-vnet-jail-escape.md",
-    "children": []
-   }
-  ]
+  "children": []
+ },
+ {
+  "title": "FreeBSD CTL HA Remote Kernel Exploitation",
+  "path": "binary-exploitation/freebsd-ctl-ha-remote-kernel-exploitation.md",
+  "children": []
+ },
+ {
+  "title": "FreeBSD Kernel Exploitation and VNET Jail Escape",
+  "path": "binary-exploitation/freebsd-kernel-exploitation-vnet-jail-escape.md",
+  "children": []
  },
  {
   "title": "VM Escape and Hypervisor Exploitation",
