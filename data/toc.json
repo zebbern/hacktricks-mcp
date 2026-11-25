@@ -125,11 +125,6 @@
     "children": []
    },
    {
-    "title": "WebRTC DoS",
-    "path": "generic-methodologies-and-resources/pentesting-network/webrtc-dos.md",
-    "children": []
-   },
-   {
     "title": "Spoofing LLMNR, NBT-NS, mDNS/DNS and WPAD and Relay Attacks",
     "path": "generic-methodologies-and-resources/pentesting-network/spoofing-llmnr-nbt-ns-mdns-dns-and-wpad-and-relay-attacks.md",
     "children": []
@@ -961,11 +956,6 @@
     "children": []
    },
    {
-    "title": "Linux - Cisco - vmanage",
-    "path": "linux-hardening/network-information/cisco-vmanage.md",
-    "children": []
-   },
-   {
     "title": "Linux - Local Web and Authentication Services",
     "path": "linux-hardening/software-information/local-web-and-auth-services.md",
     "children": []
@@ -998,11 +988,6 @@
    {
     "title": "Linux - Node inspector/CEF debug abuse",
     "path": "linux-hardening/software-information/electron-cef-chromium-debugger-abuse.md",
-    "children": []
-   },
-   {
-    "title": "Linux - Android Rooting Frameworks Manager Auth Bypass Syscall Hook",
-    "path": "linux-hardening/software-information/android-rooting-frameworks-manager-auth-bypass-syscall-hook.md",
     "children": []
    },
    {
@@ -1866,7 +1851,7 @@
    },
    {
     "title": "AD Certificates",
-    "path": "windows-hardening/active-directory-methodology/ad-certificates/README.md",
+    "path": "windows-hardening/active-directory-methodology/ad-certificates.md",
     "children": [
      {
       "title": "AD CS Account Persistence",
@@ -1889,11 +1874,6 @@
       "children": []
      }
     ]
-   },
-   {
-    "title": "Ad Certificates",
-    "path": "windows-hardening/active-directory-methodology/ad-certificates.md",
-    "children": []
    },
    {
     "title": "Ad Dynamic Objects Anti Forensics",
@@ -2267,6 +2247,11 @@
     "children": []
    },
    {
+    "title": "Android Rooting Framework Manager Authentication Bypass (KernelSU/Magisk)",
+    "path": "mobile-pentesting/android-app-pentesting/android-rooting-frameworks-manager-auth-bypass-syscall-hook.md",
+    "children": []
+   },
+   {
     "title": "Android SELinux Policy Analysis",
     "path": "mobile-pentesting/android-app-pentesting/android-selinux-policy-analysis.md",
     "children": []
@@ -2613,6 +2598,11 @@
  {
   "title": "3478 - WebRTC TURN Relay",
   "path": "network-services-pentesting/3478-pentesting-turn.md",
+  "children": []
+ },
+ {
+  "title": "WebRTC Media Server DTLS/ICE Race DoS",
+  "path": "network-services-pentesting/webrtc-media-server-dtls-race-dos.md",
   "children": []
  },
  {
@@ -3551,6 +3541,11 @@
  {
   "title": "12346/udp - Pentesting Cisco Catalyst SD-WAN Control Plane",
   "path": "network-services-pentesting/12346-udp-pentesting-cisco-sd-wan-control-plane.md",
+  "children": []
+ },
+ {
+  "title": "Cisco SD-WAN Manager / vManage Local Privilege Escalation",
+  "path": "network-services-pentesting/cisco-sd-wan-manager-local-privilege-escalation.md",
   "children": []
  },
  {
