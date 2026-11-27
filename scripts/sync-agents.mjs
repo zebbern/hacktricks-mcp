@@ -71,7 +71,7 @@ const codex = ({ name, description, body }) => {
 name = ${json(name)}
 description = ${json(description)}
 developer_instructions = '''
-You inherit the caller's tools. Use only the HackTricks MCP tools (hacktricks_search, hacktricks_get_page, hacktricks_get_toc) and what you need to load the skill. Do not edit files.
+You inherit the caller's tools. Use only the HackTricks MCP tools (hacktricks_search, hacktricks_get_page, hacktricks_get_toc, hacktricks_cloud_permissions) and what you need to load the skill. Do not edit files.
 
 ${body}
 '''

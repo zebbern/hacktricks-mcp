@@ -1,6 +1,10 @@
 {
-  "upstreamSha": "a94845e35e78233e630d198f3eb4d375304917eb",
-  "syncedAt": "2026-11-25T04:24:01.773Z",
-  "pageCount": 1149,
-  "dbBytes": 27287552
+  "schema": 3,
+  "books": {
+    "hacktricks": "d2a6bf07ef17ddcf5dd597607273da8ab0207a83",
+    "hacktricks-cloud": "49dae1447e92cf1a65390b52f95fed6c15f41d2f"
+  },
+  "syncedAt": "2026-11-27T23:17:44.217Z",
+  "pageCount": 2952,
+  "dbBytes": 64061440
 }

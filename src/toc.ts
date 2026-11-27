@@ -1,7 +1,7 @@
 /**
  * Parser for HackTricks' src/SUMMARY.md (mdBook/GitBook table of contents).
  *
- * Produces a nested tree of { title, path?, children } plus a flat map from
+ * Produces a nested tree of { title, path?, category?, children } plus a flat map from
  * markdown path -> { title, category, breadcrumb } used to enrich the index.
  */
 
@@ -9,6 +9,8 @@ export interface TocNode {
   title: string;
   /** Repo-relative path under src/ (e.g. "windows-hardening/ntlm/README.md"), if the entry links to a page */
   path?: string;
+  /** SUMMARY.md section ("# Heading") the entry sits under; set on top-level entries. */
+  category?: string;
   children: TocNode[];
 }
 
@@ -32,10 +34,18 @@ export function parseSummary(summary: string): { tree: TocNode[]; pages: Map<str
   let currentSection = "";
   const breadcrumbStack: { indent: number; title: string }[] = [];
 
-  for (const line of summary.split("\n")) {
+  for (const raw of summary.split("\n")) {
+    // Upstream annotates some entries with an HTML comment about where their
+    // title came from (17 carried one on 2026-11-27). It is not part of the entry.
+    const line = raw.replace(/<!--.*?-->/g, "");
     const header = HEADER_RE.exec(line);
     if (header) {
-      currentSection = header[1].replace(/[^\w\s&-]/g, "").trim();
+      // Keep the words and the punctuation inside names ("CI/CD", "Hardware/Physical
+      // Access"); drop the emoji every heading starts with.
+      currentSection = header[1]
+        .replace(/[^\p{L}\p{N}\s&/+.#-]/gu, "")
+        .replace(/\s+/g, " ")
+        .trim();
       continue;
     }
 
@@ -50,8 +60,10 @@ export function parseSummary(summary: string): { tree: TocNode[]; pages: Map<str
     const node: TocNode = { title, path, children: [] };
 
     while (stack.length > 0 && stack[stack.length - 1].indent >= indent) stack.pop();
-    if (stack.length === 0) tree.push(node);
-    else stack[stack.length - 1].node.children.push(node);
+    if (stack.length === 0) {
+      node.category = currentSection;
+      tree.push(node);
+    } else stack[stack.length - 1].node.children.push(node);
     stack.push({ indent, node });
 
     if (path) {
@@ -63,7 +75,18 @@ export function parseSummary(summary: string): { tree: TocNode[]; pages: Map<str
     breadcrumbStack.push({ indent, title });
   }
 
-  return { tree, pages };
+  // Entries that link nowhere point at another site ("Pentesting Printers", or a
+  // page of the other book). With no page of their own they are dropped.
+  return { tree: pruneToc(tree), pages };
+}
+
+/**
+ * Remove the entries `keep` rejects, then any left that neither link to a
+ * page nor hold other entries.
+ */
+export function pruneToc(nodes: TocNode[], keep: (node: TocNode) => boolean = () => true): TocNode[] {
+  const kept = nodes.filter(keep).map((node) => ({ ...node, children: pruneToc(node.children, keep) }));
+  return kept.filter((node) => node.path || node.children.length > 0);
 }
 
 /** Render the TOC tree as an indented plain-text outline for agent consumption. */

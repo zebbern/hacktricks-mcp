@@ -2,8 +2,10 @@
 /**
  * hacktricks-mcp — MCP server for searching and retrieving HackTricks content.
  *
- * Reads a pre-built SQLite FTS5 index bundled with the package (data/).
- * All tools are read-only and fully local: no network access at query time.
+ * Serves the pre-built SQLite FTS5 index bundled with the package (data/),
+ * which covers both HackTricks books (src/books.ts). Every tool is read-only
+ * and answers from that local index. The only network use is a background
+ * check for a newer index (src/refresh.ts), which never delays a tool call.
  */
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -11,33 +13,44 @@ import { z } from "zod";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { openDbReadonly, searchPages, getPage, listCategories, type PageRow } from "./db.js";
-import { extractOutline, extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
+import { BOOKS } from "./books.js";
+import { searchPages, getPage, listCategories, type PageRow } from "./db.js";
+import { extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
+import { checkPermissions, type EscalationMatch } from "./permission-check.js";
+import { PROVIDERS, SEVERITIES, type Severity } from "./permissions.js";
+import { newestCachedIndex, openIndex, refreshInBackground, type Index } from "./refresh.js";
+import type { TocNode } from "./toc.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const DB_PATH = process.env.HACKTRICKS_DB ?? path.join(PKG_ROOT, "data", "hacktricks.db");
-const TOC_PATH = path.join(PKG_ROOT, "data", "toc.json");
-const META_PATH = path.join(PKG_ROOT, "data", "meta.json");
+const DATA_DIR = path.join(PKG_ROOT, "data");
+const OFFLINE = ["1", "true"].includes((process.env.HACKTRICKS_OFFLINE ?? "").toLowerCase());
 
-const db = openDbReadonly(DB_PATH);
-
-const meta = fs.existsSync(META_PATH)
-  ? JSON.parse(fs.readFileSync(META_PATH, "utf8"))
-  : { upstreamSha: "unknown", syncedAt: "unknown", pageCount: 0 };
+// The bundled index answers from the first call on. One that an earlier run
+// downloaded is used right away if it is newer, and a newer one still is
+// swapped in by the background check in main(); every tool reads this variable
+// at call time.
+let index = openIndex(DATA_DIR, process.env.HACKTRICKS_DB);
+const downloaded = process.env.HACKTRICKS_DB ? null : newestCachedIndex(index);
+if (downloaded) {
+  index.db.close();
+  index = downloaded;
+}
 
 const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, "package.json"), "utf8"));
+const count = (n: number) => n.toLocaleString("en-US");
+const pages = (n: number) => `${count(n)} ${n === 1 ? "page" : "pages"}`;
 
 const server = new McpServer(
   { name: "hacktricks-mcp", version: pkg.version },
   {
     instructions: [
-      "HackTricks wiki knowledge base (offensive security: pentesting, privilege escalation,",
-      "web exploitation, Active Directory, Wi-Fi, forensics, macOS/Windows/Linux).",
+      "HackTricks wiki knowledge base in two books: HackTricks (offensive security: pentesting,",
+      "privilege escalation, web exploitation, Active Directory, Wi-Fi, forensics, macOS/Windows/Linux)",
+      "and HackTricks Cloud (AWS, Azure, GCP and other providers, Kubernetes, CI/CD).",
       "Use hacktricks_search to find relevant pages, then hacktricks_get_page to read them.",
+      "For cloud permissions, hacktricks_cloud_permissions rates them and lists the escalation techniques they enable.",
       "Prefer section= or codeOnly= on get_page to keep responses small.",
-      `Index covers ${meta.pageCount} pages, synced from upstream at ${meta.syncedAt}.`,
-      "Cloud providers (AWS, GCP, Azure), Kubernetes and CI/CD are in the separate HackTricks",
-      "Cloud book, not this index: https://cloud.hacktricks.wiki.",
+      `Index covers ${count(index.meta.pageCount)} pages, synced from upstream at ${index.meta.syncedAt}.`,
     ].join(" "),
   },
 );
@@ -48,6 +61,9 @@ const READONLY = {
   idempotentHint: true,
   openWorldHint: false,
 } as const;
+
+/** The first line of a page: its title and where a human can read it online (the source link for pages the wiki does not publish). */
+const pageHeader = (page: PageRow) => `# ${page.title}\n${page.wiki || page.url}\n\n`;
 
 /**
  * A page's headings with the size of each section and none of the content.
@@ -73,11 +89,13 @@ function pageOutline(page: PageRow, headings: Heading[]) {
       ? `Page is ${size(page.content.length)} chars and has no headings, so read it without section.`
       : `Page is ${size(page.content.length)} chars in ${headings.length} sections. Read one with section=<heading>, adding codeOnly=true for its commands only.`;
   return {
-    content: [{ type: "text" as const, text: `# ${page.title}\n${page.url}\n\n${summary}\n\n${outline.join("\n")}` }],
+    content: [{ type: "text" as const, text: pageHeader(page) + `${summary}\n\n${outline.join("\n")}` }],
     structuredContent: {
       title: page.title,
+      book: page.book,
       path: page.path,
       url: page.url,
+      wikiUrl: page.wiki,
       outline,
       content: "",
       truncated: false,
@@ -85,12 +103,22 @@ function pageOutline(page: PageRow, headings: Heading[]) {
   };
 }
 
+const bookSchema = z
+  .enum(BOOKS.map((b) => b.id) as [string, ...string[]])
+  .describe(`Book to read from. Only matters for the few paths that exist in both books, such as README.md; the default is "${BOOKS[0].id}".`);
+
+const urlFields = {
+  url: z.string().describe("Markdown source of the page on GitHub"),
+  wikiUrl: z.string().describe("The page on the public wiki, to cite. Empty for the few pages the wiki does not publish."),
+};
+
 const searchHitSchema = {
   pageId: z.number(),
+  book: z.enum(BOOKS.map((b) => b.id) as [string, ...string[]]).describe("Book the page belongs to"),
   path: z.string().describe("Page identifier; pass this to hacktricks_get_page"),
   title: z.string(),
   category: z.string(),
-  url: z.string(),
+  ...urlFields,
   chars: z.number().describe("Length of the page in characters. Under about 8,000 is cheap to read whole; above that, read the outline first."),
   snippet: z.string(),
 };
@@ -100,30 +128,33 @@ server.registerTool(
   {
     title: "Search HackTricks",
     description:
-      "Full-text search over the HackTricks offensive-security wiki (pentesting techniques, " +
-      "privilege escalation, web vulns, AD attacks, forensics). Returns ranked pages " +
+      "Full-text search over the HackTricks wiki: both the HackTricks book (pentesting techniques, " +
+      "privilege escalation, web vulns, AD attacks, forensics) and the HackTricks Cloud book (AWS, " +
+      "Azure, GCP and other providers, Kubernetes, CI/CD). Returns ranked pages " +
       "with snippets and each page's size. Use technical terms or the question in plain words (e.g. 'kerberoast' or " +
       "'how do I abuse unconstrained delegation'); the page named after the technique is ranked first. " +
       "Follow up with hacktricks_get_page on a result's path to read the content.",
     inputSchema: {
-      query: z.string().min(1).describe("Search terms or a plain question, e.g. 'docker escape' or 'how do I escalate from the lxd group'"),
+      query: z.string().min(1).describe("Search terms or a plain question, e.g. 'docker escape', 'aws s3 enumeration' or 'how do I escalate from the lxd group'"),
       category: z
         .string()
         .optional()
-        .describe("Optional: restrict to one platform when the top hits are for the wrong one (substring match), e.g. 'Linux' or 'Windows'"),
+        .describe("Optional: restrict to one category when the top hits are for the wrong one (substring match), e.g. 'Linux' or 'Windows'. hacktricks_get_toc lists them"),
       limit: z.number().int().min(1).max(25).default(10).describe("Max results (default 10)"),
     },
     outputSchema: { results: z.array(z.object(searchHitSchema)) },
     annotations: READONLY,
   },
   async ({ query, category, limit }) => {
-    const hits = searchPages(db, query, category, limit);
+    const hits = searchPages(index.db, query, category, limit);
     const results = hits.map((h) => ({
       pageId: h.page_id,
+      book: h.book,
       path: h.path,
       title: h.title,
       category: h.category,
       url: h.url,
+      wikiUrl: h.wiki,
       chars: h.chars,
       snippet: h.snippet.replace(/\n+/g, " ").trim(),
     }));
@@ -133,7 +164,7 @@ server.registerTool(
         : results
             .map(
               (r, i) =>
-                `${i + 1}. ${r.title}\n   path: ${r.path}\n   category: ${r.category}\n   size: ${r.chars.toLocaleString("en-US")} chars\n   ${r.snippet}`,
+                `${i + 1}. ${r.title}\n   book: ${r.book}\n   path: ${r.path}\n   category: ${r.category}\n   size: ${r.chars.toLocaleString("en-US")} chars\n   ${r.snippet}`,
             )
             .join("\n\n");
     return { content: [{ type: "text", text }], structuredContent: { results } };
@@ -148,12 +179,14 @@ server.registerTool(
       "Retrieve content of a HackTricks page found via hacktricks_search. For a long page, start with " +
       "outlineOnly=true to list its sections with their sizes, then use section= to read one section by " +
       "heading name, or codeOnly=true to get just the commands/payloads. A short page (the search " +
-      "result shows its size) can be read whole; long ones are truncated at 20,000 characters.",
+      "result shows its size) can be read whole. Text comes in slices of 20,000 characters; a cut " +
+      "slice ends with the offset where the rest continues.",
     inputSchema: {
       path: z
         .string()
         .min(1)
         .describe("Page path from hacktricks_search (e.g. 'windows-hardening/active-directory-methodology/kerberoast.md'). Unique suffixes like 'kerberoast' also work."),
+      book: bookSchema.optional(),
       outlineOnly: z
         .boolean()
         .default(false)
@@ -166,19 +199,30 @@ server.registerTool(
         .boolean()
         .default(false)
         .describe("If true, return only fenced code blocks (commands/payloads) from the page or section"),
+      offset: z
+        .number()
+        .int()
+        .min(0)
+        .default(0)
+        .describe("Skip this many characters of the page or section. A truncated response ends with the offset where the rest continues."),
     },
     outputSchema: {
       title: z.string(),
+      book: z.string(),
       path: z.string(),
-      url: z.string(),
+      ...urlFields,
       outline: z.array(z.string()),
       content: z.string(),
       truncated: z.boolean(),
+      nextOffset: z
+        .number()
+        .optional()
+        .describe("Where the rest of a truncated text continues (pass it as offset); absent when everything was returned"),
     },
     annotations: READONLY,
   },
-  async ({ path: pagePath, outlineOnly, section, codeOnly }) => {
-    const page = getPage(db, pagePath);
+  async ({ path: pagePath, book, outlineOnly, section, codeOnly, offset }) => {
+    const page = getPage(index.db, pagePath, book);
     if (!page) {
       return {
         content: [
@@ -219,81 +263,134 @@ server.registerTool(
       content = blocks.length > 0 ? blocks.map((b) => "```\n" + b + "\n```").join("\n\n") : "(no code blocks found)";
     }
 
+    // A long text comes in slices of MAX characters, and a slice that is cut
+    // says where the next one starts: a section without subsections has no
+    // smaller piece to ask for.
     const MAX = 20000;
-    let truncated = false;
-    if (content.length > MAX) {
-      truncated = true;
-      content =
-        content.slice(0, MAX) +
-        `\n\n--- [TRUNCATED] Page is ${content.length} chars. Use section= to read a specific part. Sections:\n` +
-        outline.join("\n");
+    const whole = content.length;
+    const slice = content.slice(offset, offset + MAX);
+    const truncated = offset + slice.length < whole;
+    const nextOffset = truncated ? offset + slice.length : undefined;
+    if (slice.length === 0) {
+      content = `Nothing left to read: the ${section ? "section" : "page"} is ${whole.toLocaleString("en-US")} characters and the offset is ${offset}.`;
+    } else {
+      content = slice;
+      if (truncated) {
+        content +=
+          `\n\n--- [TRUNCATED at ${nextOffset} of ${whole.toLocaleString("en-US")} characters. Read the rest with offset=${nextOffset}, ` +
+          `or use section= for a smaller part. Sections:\n${outline.join("\n")}`;
+      }
     }
 
-    const header = `# ${page.title}\n${page.url}\n\n`;
     return {
-      content: [{ type: "text", text: header + content }],
+      content: [{ type: "text", text: pageHeader(page) + content }],
       structuredContent: {
         title: page.title,
+        book: page.book,
         path: page.path,
         url: page.url,
+        wikiUrl: page.wiki,
         outline,
         content,
         truncated,
+        nextOffset,
       },
     };
   },
 );
+
+/** Entries whose title contains `needle`, each with everything under it. */
+function tocMatching(needle: string): string[] {
+  const visit = (nodes: TocNode[], depth: number, out: string[]): void => {
+    for (const node of nodes) {
+      const sub: string[] = [];
+      visit(node.children, depth + 1, sub);
+      if (sub.length > 0 || node.title.toLowerCase().includes(needle)) {
+        out.push("  ".repeat(depth) + "- " + node.title + (node.path ? `  [${node.path}]` : ""), ...sub);
+      }
+    }
+  };
+  const lines: string[] = [];
+  for (const book of BOOKS) {
+    const found: string[] = [];
+    visit(index.toc[book.id] ?? [], 0, found);
+    if (found.length > 0) lines.push(`${book.title}:`, ...found);
+  }
+  return lines;
+}
+
+/** Pages (entries linking to one) in a subtree, the root included. */
+const pagesIn = (nodes: TocNode[]): number =>
+  nodes.reduce((n, node) => n + (node.path ? 1 : 0) + pagesIn(node.children), 0);
+
+/** The map to read before searching: each book's categories and the chapters under them, no page paths. */
+function tocOverview(
+  categories: { book: string; category: string; pages: number }[],
+): string {
+  const lines = [
+    `Index: ${count(index.meta.pageCount)} pages, synced ${index.meta.syncedAt}.`,
+  ];
+  for (const book of BOOKS) {
+    const roots = index.toc[book.id] ?? [];
+    if (roots.length === 0) continue;
+    const inBook = categories.filter((c) => c.book === book.id);
+    lines.push("", `${book.title}: ${pages(inBook.reduce((n, c) => n + c.pages, 0))}, upstream ${String(index.meta.books?.[book.id] ?? "?").slice(0, 7)}`);
+    let category: string | undefined;
+    for (const root of roots) {
+      if (root.category !== category) {
+        category = root.category;
+        lines.push(`${category || "(other)"} (${pages(inBook.find((c) => c.category === (category ?? ""))?.pages ?? 0)})`);
+      }
+      lines.push(`  - ${root.title} (${pages(pagesIn([root]))})`);
+    }
+  }
+  lines.push("", `Pass a filter (e.g. "Kerberos", "AWS" or "CI/CD") to list the pages under matching entries.`);
+  return lines.join("\n");
+}
+
+const TOC_MAX_LINES = 300;
 
 server.registerTool(
   "hacktricks_get_toc",
   {
     title: "HackTricks Table of Contents",
     description:
-      "Get the HackTricks wiki structure: categories and page tree. Call without arguments for the " +
-      "top-level overview, or pass a category to see its pages. Useful to understand where a topic " +
-      "lives before searching.",
+      "Get the structure of both HackTricks books from their tables of contents. Call without arguments for " +
+      "the overview (each book's categories and chapters with page counts), or pass a filter to list the " +
+      "pages under the entries whose title contains it. Useful to see where a topic lives before searching.",
     inputSchema: {
       category: z
         .string()
         .optional()
-        .describe("Optional category name to expand (e.g. 'Linux Hardening'). Omit for top-level overview."),
+        .describe("Optional text filter on entry titles, case-insensitive: a category to expand (e.g. 'Linux Hardening', 'Pentesting Cloud') or a topic to list (e.g. 'Kerberos', 'AWS', 'GitHub Actions'). Omit for the overview."),
     },
     outputSchema: {
-      categories: z.array(z.object({ category: z.string(), pages: z.number() })),
-      tree: z.string().describe("Indented text tree of matching pages"),
+      categories: z.array(z.object({ book: z.string(), category: z.string(), pages: z.number() })),
+      tree: z.string().describe("Overview, or the indented entries matching the filter"),
     },
     annotations: READONLY,
   },
   async ({ category }) => {
-    const categories = listCategories(db);
-    const toc = fs.existsSync(TOC_PATH)
-      ? JSON.parse(fs.readFileSync(TOC_PATH, "utf8"))
-      : null;
+    const categories = listCategories(index.db);
+    const bookTitle = (id: string) => BOOKS.find((b) => b.id === id)?.title ?? id;
+    const catText = categories.map((c) => `- ${bookTitle(c.book)} > ${c.category} (${pages(c.pages)})`).join("\n");
 
-    let tree = "";
-    if (toc) {
-      const matchSection = (nodes: any[], depth: number): string[] => {
-        const lines: string[] = [];
-        for (const n of nodes) {
-          const line = "  ".repeat(depth) + "- " + n.title + (n.path ? `  [${n.path}]` : "");
-          if (category) {
-            const sub = matchSection(n.children ?? [], depth + 1);
-            if (sub.length > 0 || n.title.toLowerCase().includes(category.toLowerCase())) {
-              lines.push(line, ...sub);
-            }
-          } else if (depth < 2) {
-            lines.push(line, ...matchSection(n.children ?? [], depth + 1));
-          }
-        }
-        return lines;
-      };
-      tree = matchSection(toc, 0).join("\n");
+    let tree: string;
+    let text: string;
+    if (!category) {
+      tree = tocOverview(categories);
+      text = tree;
+    } else {
+      const lines = tocMatching(category.toLowerCase());
+      if (lines.length > TOC_MAX_LINES) {
+        tree = lines.slice(0, TOC_MAX_LINES).join("\n");
+        text = `Entries matching "${category}" (first ${TOC_MAX_LINES} of ${lines.length} lines; use a more specific filter):\n${tree}`;
+      } else {
+        tree = lines.length > 0 ? lines.join("\n") : "(none)";
+        text = `Entries matching "${category}":\n${tree}`;
+      }
+      text += `\n\nCategories:\n${catText}`;
     }
-
-    const catText = categories.map((c) => `- ${c.category} (${c.pages} pages)`).join("\n");
-    const text = category
-      ? `Pages matching "${category}":\n${tree || "(none)"}\n\nAll categories:\n${catText}`
-      : `HackTricks categories:\n${catText}\n\nStructure (top 2 levels):\n${tree}`;
     return {
       content: [{ type: "text", text }],
       structuredContent: { categories, tree },
@@ -301,10 +398,152 @@ server.registerTool(
   },
 );
 
+const severitySchema = z.enum([...SEVERITIES, "not rated"] as [Severity, ...string[]]);
+
+server.registerTool(
+  "hacktricks_cloud_permissions",
+  {
+    title: "Check Cloud Permissions",
+    description:
+      "Check cloud permissions against HackTricks Cloud. Give the permissions a principal holds and get each one's " +
+      "rating (critical, high, medium, low) from the book's rated list, the combination rules they complete, and " +
+      "every escalation technique in the book's catalog whose required permissions are all held, with the page " +
+      "section that explains each. Use it for questions like 'is this permission dangerous?', 'what can I do with " +
+      "these permissions?' or 'which of these permissions should I remove?'. Resources, scopes and request " +
+      "conditions are not evaluated, so read a technique's conditions and its page before relying on it.",
+    inputSchema: {
+      provider: z.enum(PROVIDERS).describe('The cloud: "aws", "gcp", "azure" or "k8s"'),
+      permissions: z
+        .array(z.string().min(1))
+        .min(1)
+        .max(200)
+        .describe(
+          'The permissions held, as the cloud writes them: "iam:PassRole", "iam.serviceAccounts.actAs", ' +
+          '"Microsoft.Authorization/roleAssignments/write", "Application.ReadWrite.All". Wildcards as in a policy ' +
+          '("iam:*", "s3:Get*"). For k8s, one grant per entry as "verb resource[.group][/subresource]", "verb *" or ' +
+          '"verb /url": "create pods", "get secrets", "create pods/exec", "get *", "impersonate users".',
+        ),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(20)
+        .describe("How many escalation techniques to list at most (default 20); the total is always reported"),
+    },
+    outputSchema: {
+      provider: z.enum(PROVIDERS),
+      risk: z.array(
+        z.object({
+          permission: z.string(),
+          severity: severitySchema,
+          note: z.string().optional().describe("What a wildcard matches, or why a Kubernetes rule rates the grant"),
+        }),
+      ),
+      combinations: z.array(
+        z.object({ severity: z.enum(SEVERITIES), permissions: z.array(z.string()) }),
+      ),
+      escalation: z.array(
+        z.object({
+          id: z.string(),
+          service: z.string(),
+          title: z.string(),
+          summary: z.string(),
+          severity: z.enum(SEVERITIES),
+          confidence: z.string(),
+          needs: z.array(z.string()),
+          gains: z.string().describe("What the technique gains: the kind of principal or resource, and where"),
+          conditions: z.array(z.string()),
+          blockers: z.array(z.string()),
+          mitigation: z.string(),
+          page: z.string().describe("Page path; pass it to hacktricks_get_page"),
+          section: z.string().optional().describe("Heading of the part that explains the technique, for hacktricks_get_page"),
+        }),
+      ),
+      escalationTotal: z.number(),
+      notEvaluated: z.number().describe("Techniques of this cloud that depend on more than permissions and are never listed"),
+      sections: z.array(
+        z.object({
+          permission: z.string(),
+          page: z.string(),
+          heading: z.string().describe("Heading of a section named after the permission, for hacktricks_get_page"),
+        }),
+      ),
+    },
+    annotations: READONLY,
+  },
+  async ({ provider, permissions, limit }) => {
+    let check;
+    try {
+      check = checkPermissions(index.db, provider, permissions, limit);
+    } catch (err) {
+      return { content: [{ type: "text", text: (err as Error).message }], isError: true };
+    }
+
+    const label = (s: string) => s.padEnd(10);
+    const read = (page: string, heading?: string) =>
+      `hacktricks_get_page path="${page}"${heading ? ` section="${heading.replace(/"/g, "'")}"` : ""}`;
+    const lines = [`hacktricks_cloud_permissions: ${provider}, ${check.risk.length} permissions.`, "", "Risk per permission"];
+    for (const r of check.risk) lines.push(`  ${label(r.severity)} ${r.permission}${r.note ? `  (${r.note})` : ""}`);
+
+    lines.push("", check.combinations.length > 0 ? "Combinations held (every permission of the combination is held)" : "Combinations held: none");
+    for (const c of check.combinations) lines.push(`  ${label(c.severity)} ${c.permissions.join(" + ")}`);
+
+    lines.push(
+      "",
+      `Escalation techniques whose permissions are all held: ${check.escalationTotal}` +
+        (check.escalationTotal > check.escalation.length ? ` (first ${check.escalation.length} listed)` : ""),
+    );
+    check.escalation.forEach((m, i) => lines.push(...describeTechnique(m, i + 1, read)));
+
+    // A section already named by a listed technique is not repeated.
+    const covered = new Set(check.escalation.map((m) => `${m.page}#${m.section ?? ""}`));
+    const sections = check.sections.filter((s) => !covered.has(`${s.page}#${s.heading}`));
+    if (sections.length > 0) {
+      lines.push("", "Sections of HackTricks Cloud named after these permissions");
+      for (const s of sections) lines.push(`   ${s.permission}: ${read(s.page, s.heading)}`);
+    }
+
+    lines.push(
+      "",
+      "Not evaluated: resources, scopes, request conditions and the properties of the target. A technique is listed " +
+        "when every permission it names is held; read its conditions and its page before relying on it. " +
+        `${check.notEvaluated} ${provider} techniques depend on such facts and are never listed.`,
+    );
+    const { provider: _, ...rest } = check;
+    return { content: [{ type: "text", text: lines.join("\n") }], structuredContent: { provider, ...rest } };
+  },
+);
+
+/** The lines of one technique in the tool's text. */
+function describeTechnique(m: EscalationMatch, n: number, read: (page: string, heading?: string) => string): string[] {
+  const lines = [
+    `${n}. [${m.severity}] ${m.title}`,
+    `   needs: ${m.needs.join(", ")}   gains: ${m.gains || "see page"}   confidence: ${m.confidence}`,
+  ];
+  if (m.summary) lines.push(`   ${m.summary}`);
+  if (m.conditions.length > 0) lines.push(`   conditions: ${m.conditions.join(" ")}`);
+  if (m.blockers.length > 0) lines.push(`   blocked by: ${m.blockers.join(", ")}`);
+  lines.push(`   read: ${read(m.page, m.section)}`);
+  if (m.mitigation) lines.push(`   mitigate: ${m.mitigation}`);
+  return lines;
+}
+
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error("hacktricks-mcp running on stdio");
+
+  // A custom database path is an explicit choice of index, so leave it alone.
+  if (!OFFLINE && !process.env.HACKTRICKS_DB) {
+    refreshInBackground(
+      () => index,
+      (next) => {
+        index.db.close();
+        index = next;
+      },
+    );
+  }
 }
 
 main().catch((err) => {

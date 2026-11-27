@@ -21,18 +21,51 @@ Hosts without a bundled researcher fall back to the hand-off the skill describes
 
 **Why `outlineOnly` exists.** The same test showed agents reading whole pages of 9,000 to 23,000 characters just to find the headings, and in 5 of 13 runs re-reading sections of a page they had already read whole. `hacktricks_get_page` with `outlineOnly` returns the headings with the size of each section in about 700 characters for the median page. Two more rounds (six runs) refined it: researchers asked for the outline of short pages they then read whole, so search hits now carry each page's size and the skill says to read a page whole under about 8,000 characters (a third of the pages); after that, two short-page questions were read whole with no outline step. The gain is real but narrow. On a targeted question about a 33,000-character page the researcher read 48% less. On a question where the agent wanted broad coverage the amount read varied by about 30% between runs with no clear saving, and on a broad research question whole pages were needed anyway. Each round was a single run per question, so treat all of it as directional.
 
+**Why the skill tells agents to name the technique first.** A question that only describes a situation finds its page with one search for 48 of 89 questions; the same need with the technique named finds it for 80. Searching as typed first and adding the name on a miss reaches the same pages as naming first (82 of 89) but costs 1.46 calls instead of 1.10. The evaluation is `npm run eval:workflow` (see [development.md](development.md#evaluating-quality)). It cannot show whether a live agent names the technique the way a scenario does, so that step is the agent's own.
+
+**Why the skill sends permission questions to `hacktricks_cloud_permissions`.** HackTricks Cloud keeps its permission knowledge in structured files that the wiki pages only embed, so a search could not reach most of it: 52,000 rated permissions, 685 escalation techniques. Six of the 89 scenario questions name permissions; the plain search finds the page for one of them, the check finds all six and hands over the page section. The check was proven against the catalog before it was wired in (`npm run eval:permissions`): holding a technique's own permissions lists it for all 657 techniques that name permissions, and that test caught two real defects on the way, a technique with an empty requirement that was listed for everyone and a Kubernetes subresource grant that counted as its resource. The catalog does not cover everything the book describes (`Microsoft.Authorization/roleAssignments/write` has a section and no technique), so the check also returns the sections whose heading names the permission. It evaluates permissions only, and the skill tells agents to read the conditions before relying on a technique.
+
+**Why the skill explains how the Cloud book names its pages.** The Cloud book titles every page by provider, service and phase (`AWS - IAM Privesc`, `Az - Key Vault Post Exploitation`), so a search about a service returns its pages from several phases. Adding the phase word to the query did not help (`aws iam privesc` ranks lower than the sentence), so the skill does not suggest it. It tells agents to read the hit titles for the phase, and to list a provider or a service with `hacktricks_get_toc`, which returns its pages in 2,000 to 8,000 characters.
+
+**Why the skill does not build links.** The skill used to tell agents to turn a path into a wiki link by replacing `.md` with `.html`. That is wrong for a quarter of the pages: on the wiki a `README.md` is the index of its folder, and asking for `README.html` returns the site's not-found page with status 200. The server now works the link out and returns it (`wikiUrl`, and in the first lines of every page read), and 79 sampled links were checked against the live sites.
+
+**Live run of 2026-11-27, after the Cloud book and the permissions check (eleven questions, one run each).** The real MCP server is not connected in this workspace, so each agent got a stand-in that starts the built server and prints the tool's text, the tools' real descriptions, and the skill to read. Treat the results as directional: one run per question, with the restrictions restated in the prompt.
+
+| Question | First move | Result | Calls | Characters read | Tokens |
+|---|---|---|---|---|---|
+| containerd `ctr`, names the technique | search with the technique named | right page, read whole (short) | 2 | 4,779 | 86,000 |
+| Jenkins script console, names the technique | search with the technique named | right page, read whole (short) | 2 | 6,125 | 90,000 |
+| Kerberoast, names the technique | search with the technique named | right page, outline then 4 sections | 6 | 9,096 | 113,000 |
+| SSRF to the metadata endpoint, names the technique | search with the question as typed | right page, outline then 4 sections | 8 | 31,662 | 164,000 |
+| CORS, situation only | named the technique itself | right page, outline then 4 sections | 6 | 7,375 | 134,000 |
+| Kerberoast, situation only | named the technique itself | right page, outline then 5 sections | 7 | 10,441 | 127,000 |
+| Cron, situation only | named the technique itself | right page, outline then 3 sections | 6 | 24,465 | 147,000 |
+| Kubernetes, situation only | permissions check with `create pods` | four pages, the sections the check pointed to | 15 | 33,188 | 227,000 |
+| AWS permission | permissions check | the section it pointed to | 2 | 4,463 | 85,000 |
+| Azure permission | permissions check | two pages, outline then section | 5 | 9,690 | 90,000 |
+| A CVE HackTricks has no page for | search, then search with other words | said so, and that the CVE belongs to another product | 7 | 15,115 | 143,000 |
+
+All eleven found the pages that answer the question, every report used the three-part format with the wiki link, every command that was checked (over 120) is in a page the agent had read, and no agent ran anything. Together: 66 tool calls, 156,399 characters of tool output, about 1.4 million tokens, 24 minutes of agent time. Two things came out of it. A section longer than 20,000 characters with no subsections could not be read to the end, so `hacktricks_get_page` now takes `offset` and a cut response says where the rest continues. And the Kubernetes scenario expected the overview page where the specific sub-page answers the question, so the expectation was corrected. The Kubernetes agent also did what the scripted evaluation cannot show: it recognised "I can create pods" as a grant and opened with the permissions check.
+
+The cron question was run a second time with the `offset` change and the updated skill: the agent read the long section to its end with `offset=20000` and went on to the Linux Privilege Escalation page, where the actual overwrite commands are, so its answer was fuller than the first run's. That came at 19 calls, 51,863 characters and 263,000 tokens, against 6 calls and 147,000 tokens the first time: completeness and cost pull in different directions on a broad question, which is why the skill sends such questions to a researcher subagent rather than answering them in the main conversation.
+
 ## MCP registry
 
-`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). Publishing is a local, one-command step after each npm release (kept out of CI by design):
+`server.json` at the repo root is the manifest for the [official MCP registry](https://registry.modelcontextprotocol.io). `release.yml` publishes it after the npm publish of every release, index releases included, so the listing follows npm on its own. It uses the registry's trusted publishing, which works like npm's: the workflow logs in with GitHub OIDC (`mcp-publisher login github-oidc`) and no token is stored anywhere.
+
+If that step fails, the npm package and the GitHub release are already out and only the listing is behind. Do the same by hand from the repo root, on the tag that was released. `mcp-publisher` is the official CLI. It is a binary and is not on npm (the npm package of that name is something else): install it with `brew install mcp-publisher` on macOS or Linux, or take `mcp-publisher_windows_amd64.tar.gz` from the [registry's releases](https://github.com/modelcontextprotocol/registry/releases) on Windows, and check it with `mcp-publisher --help`.
 
 ```bash
 mcp-publisher login github   # device flow, once per machine
+mcp-publisher validate       # checks server.json against the registry, publishes nothing
 mcp-publisher publish        # from the repo root, after npm has the new version
 ```
 
+`validate` asks the registry's own validator, the same one `publish` goes through, and reports every issue at once. Without the binary the same check is one request: `curl -X POST https://registry.modelcontextprotocol.io/v0/validate -H "Content-Type: application/json" -d @server.json` answers `{"valid":true,"issues":[]}` for a manifest the registry accepts.
+
 The registry verifies npm ownership via the `mcpName` field in `package.json`, and requires `server.json` `version` + `packages[].version` to match the published npm version exactly. `description` must stay under 100 characters.
 
-Index syncs publish a patch release on their own (see [architecture.md](architecture.md#sync-automation)), so the registry listing drifts until this command is re-run after each one. The Release workflow prints a reminder when it publishes.
+Index syncs publish a patch release on their own, through the same workflow (see [architecture.md](architecture.md#sync-automation)), so they update the listing too.
 
 ## Plugin packaging: one plugin, four hosts
 

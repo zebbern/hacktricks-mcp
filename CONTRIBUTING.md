@@ -28,13 +28,15 @@ Exception: `kimi-plugin/kimi.plugin.json` is versioned by the Kimi marketplace t
 
 ### 3. The index is generated, but committed
 
-`data/` is produced by `npm run sync` from upstream HackTricks and is committed to the repo (so clones and the npm package work out of the box). Do not hand-edit `data/hacktricks.db`, `data/toc.json`, or `data/meta.json`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the index changes; manual syncs happen via `npm run sync`.
+`data/` is produced by `npm run sync` from the upstream HackTricks and HackTricks Cloud repositories and is committed to the repo (so clones and the npm package work out of the box). Do not hand-edit `data/hacktricks.db`, `data/toc.json`, or `data/meta.json`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the index changes; manual syncs happen via `npm run sync`.
 
-### 4. Search quality is gated
+When a change alters what the indexer writes (a column, a title, a category, a link), bump `INDEX_SCHEMA` in `src/db.ts`. The sync script rebuilds on a different number even if upstream has not moved, and a running server refuses to download an index of another layout.
 
-Any change to `src/db.ts` (ranking, aliases) or `src/markdown.ts` (cleaning) must keep `npm run eval` at 30/30. If a legitimate ranking change breaks a fixture, discuss in the PR whether the fixture or the ranking is wrong, then update `tests/queries.json` deliberately, never to just make CI green.
+### 4. Quality is gated
 
-Run `npm run eval:strategies` before and after a ranking change and compare. What the skill tells agents about querying and the reference numbers in `docs/development.md` rest on that report, so update both when the results move; do not change search guidance on assumption.
+Any change to `src/db.ts` (ranking, aliases), `src/markdown.ts` (cleaning), `src/permissions.ts`, `src/kubernetes-rbac.ts` or `src/permission-check.ts` (the permissions check) must keep all three gates green: `npm run eval` at 42/42, `npm run eval:workflow` (the route the skill gives must find the page for at least 90% of the scenario questions, asked either way) and `npm run eval:permissions` (every technique of the catalog that names permissions is listed from exactly those, and none without them). If a legitimate change breaks a fixture or a scenario, discuss in the PR whether the test or the code is wrong, then update `tests/` deliberately, never to just make CI green. Look a fixture's expected answer up in the book's data rather than copying it from the tool.
+
+Run `npm run eval:workflow` before and after a ranking change and compare. What the skill tells agents about querying and the reference numbers in `docs/development.md` rest on that run, so update both when the results move; do not change search guidance on assumption. `docs/development.md` also lists the ideas that were measured and rejected, so check it before trying one of them again.
 
 ### 5. Docs are DRY
 
@@ -44,23 +46,25 @@ Each topic has exactly one home: tool API in `docs/tools.md`, pipeline in `docs/
 
 ```bash
 npm install
-npm run sync                 # build the index
+npm run sync                 # build the index from both books
 # ... edit src/ ...
-npm run build && npm run eval && npm run smoke
+npm run build && npm run eval && npm run eval:workflow && npm run eval:permissions && npm run smoke && npm run smoke:refresh
 ```
 
-Add an eval fixture in `tests/queries.json` when you add or change search behavior. See [docs/development.md](docs/development.md) for details.
+Add an eval fixture in `tests/queries.json` when you add or change search behavior, and a case in `tests/permissions.json` when you change the permissions check. See [docs/development.md](docs/development.md) for details.
 
 ## Releasing (maintainers)
 
 ```bash
-npm version patch && git push --follow-tags
+npm version patch -m "chore: release v%s" && git push --follow-tags
 ```
 
-This triggers `release.yml`: full quality gates, GitHub Release with index assets, npm publish via OIDC trusted publishing. Afterwards, bump the MCP registry listing locally:
+The message is the one `sync.yml` uses; without `-m`, npm titles the commit with the bare version number.
+
+This triggers `release.yml`: full quality gates, GitHub Release with index assets, npm publish and an MCP registry publish, both through OIDC trusted publishing. If the registry step fails, the package is already out; publish the listing by hand from the released tag ([docs/agents.md](docs/agents.md#mcp-registry)):
 
 ```bash
-mcp-publisher publish
+mcp-publisher validate && mcp-publisher publish
 ```
 
 See [docs/agents.md](docs/agents.md) for registry rules (`mcpName`, version match, 100-char description cap).

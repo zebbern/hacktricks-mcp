@@ -30,6 +30,12 @@ jobs:
       - name: Verify search quality
         run: npm run eval
 
+      - name: Verify the agent workflow
+        run: npm run eval:workflow
+
+      - name: Verify the permissions check
+        run: npm run eval:permissions
+
       - name: Commit updated index
         id: commit
         run: |
@@ -37,19 +43,19 @@ jobs:
             echo "Index unchanged, nothing to commit"
             exit 0
           fi
-          SHA=$(node -p "require('./data/meta.json').upstreamSha.slice(0,7)")
+          BOOKS=$(node -p "Object.entries(require('./data/meta.json').books).map(([book, sha]) => book + '@' + sha.slice(0, 7)).join(' ')")
           git config user.name "hacktricks-mcp-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
-          git commit -m "chore: sync index with HackTricks upstream ${SHA}"
+          git commit -m "chore: sync index with HackTricks upstream ${BOOKS}"
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Tag index snapshot
         if: steps.commit.outputs.changed == 'true'
         run: |
-          SHA=$(node -p "require('./data/meta.json').upstreamSha.slice(0,7)")
-          TAG="index-$(date +%Y.%m.%d)-${SHA}"
+          SHAS=$(node -p "Object.values(require('./data/meta.json').books).map(sha => sha.slice(0, 7)).join('-')")
+          TAG="index-$(date +%Y.%m.%d)-${SHAS}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then exit 0; fi
           git tag "$TAG"
           git push origin "$TAG"

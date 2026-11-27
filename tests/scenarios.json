@@ -481,5 +481,145 @@
     "expect": ["arbitrary-write-2-exec/aw2exec-got-plt.md"],
     "named": "How do I turn an arbitrary write into code execution by overwriting the GOT?",
     "goal": "I can write any value anywhere in memory once. How can I overwrite a function pointer resolved lazily to redirect execution?"
+  },
+  {
+    "id": "aws-iam-privesc",
+    "area": "cloud",
+    "expect": ["aws-iam-privesc/README.md"],
+    "named": "How do I escalate privileges in AWS IAM?",
+    "goal": "I have a low-privileged AWS user with some IAM permissions. How can I tell which of them let me gain more permissions?"
+  },
+  {
+    "id": "gcp-iam-privesc",
+    "area": "cloud",
+    "expect": ["gcp-iam-privesc.md"],
+    "named": "How do I escalate privileges with GCP IAM permissions?",
+    "goal": "Which permissions let a Google Cloud principal grant itself higher roles, and how do I check which ones my service account has?"
+  },
+  {
+    "id": "aws-s3-post-exploitation",
+    "area": "cloud",
+    "expect": ["aws-s3-post-exploitation/README.md"],
+    "named": "How do I do S3 post exploitation?",
+    "goal": "I have AWS keys that can access a bucket. What can I do with S3 beyond downloading objects?"
+  },
+  {
+    "id": "aws-s3-unauthenticated",
+    "area": "cloud",
+    "expect": ["aws-s3-unauthenticated-enum/README.md"],
+    "named": "How do I enumerate an S3 bucket without credentials?",
+    "goal": "How can I access an S3 bucket that allows anonymous requests?"
+  },
+  {
+    "id": "k8s-privilege-escalation",
+    "area": "cloud",
+    "expect": ["kubernetes-privilege-escalation/workload-and-pod-access.md", "kubernetes-privilege-escalation/README.md"],
+    "named": "How do I escalate privileges inside a Kubernetes cluster?",
+    "goal": "I can create pods in a Kubernetes cluster. How do I use that to reach the node or the API server with more rights?"
+  },
+  {
+    "id": "k8s-token-permissions",
+    "area": "cloud",
+    "expect": ["kubernetes-enumeration.md"],
+    "named": "How do I check what permissions a Kubernetes service account has?",
+    "goal": "I stole a Kubernetes service account token. How do I find out what it is allowed to do in the cluster?"
+  },
+  {
+    "id": "entra-id-privesc",
+    "area": "cloud",
+    "expect": ["az-entraid-privesc/README.md"],
+    "named": "How do I escalate privileges in Entra ID?",
+    "goal": "I compromised a Global Administrator in an Entra tenant. How do I turn that into access to Azure subscriptions?"
+  },
+  {
+    "id": "entra-id-persistence",
+    "area": "cloud",
+    "expect": ["az-entraid-persistence.md"],
+    "named": "What are Entra ID persistence techniques?",
+    "goal": "I have Global Administrator in a tenant. How do I keep access after they reset the password I used?"
+  },
+  {
+    "id": "azure-password-spraying",
+    "area": "cloud",
+    "expect": ["az-password-spraying.md"],
+    "named": "How do I password spray Office 365 accounts?",
+    "goal": "I have a list of corporate email addresses. How can I test which ones use weak passwords without locking the accounts?"
+  },
+  {
+    "id": "jenkins-script-console",
+    "area": "cicd",
+    "expect": ["jenkins-rce-with-groovy-script.md"],
+    "named": "How do I get remote code execution on Jenkins through the script console?",
+    "goal": "I have credentials for a Jenkins controller and can reach its script console. How do I run system commands from there?"
+  },
+  {
+    "id": "github-actions-cache-poisoning",
+    "area": "cicd",
+    "expect": ["gh-actions-cache-poisoning.md"],
+    "named": "How does GitHub Actions cache poisoning work?",
+    "goal": "How can a workflow I control plant a poisoned entry in the GitHub Actions cache that a privileged workflow later restores?"
+  },
+  {
+    "id": "terraform-state",
+    "area": "cicd",
+    "expect": ["terraform-security.md"],
+    "named": "How do I abuse Terraform state files?",
+    "goal": "I can read the backend where Terraform keeps its state. What secrets are in there and what can I do with them?"
+  },
+  {
+    "id": "circleci-secrets",
+    "area": "cicd",
+    "expect": ["circleci-security.md"],
+    "named": "How do I attack a CircleCI pipeline?",
+    "goal": "How do I get the secrets a CircleCI pipeline has in its environment?"
+  },
+  {
+    "id": "argocd",
+    "area": "cicd",
+    "expect": ["argocd-security.md"],
+    "named": "How do I abuse access to Argo CD?",
+    "goal": "What can I do with access to an Argo CD API server?"
+  },
+  {
+    "id": "aws-lambda-passrole",
+    "area": "permissions",
+    "expect": ["aws-privilege-escalation/aws-lambda-privesc/README.md"],
+    "named": "How do I escalate privileges with iam:PassRole and lambda:CreateFunction?",
+    "goal": "A role I took over has iam:PassRole and lambda:CreateFunction. What can I do with them?"
+  },
+  {
+    "id": "aws-createpolicyversion",
+    "area": "permissions",
+    "expect": ["aws-privilege-escalation/aws-iam-privesc/README.md"],
+    "named": "How do I use iam:CreatePolicyVersion to escalate privileges?",
+    "goal": "Is iam:CreatePolicyVersion dangerous when a role has it on its own policies?"
+  },
+  {
+    "id": "aws-runinstances",
+    "area": "permissions",
+    "expect": ["aws-privilege-escalation/aws-ec2-privesc/README.md"],
+    "named": "What privilege escalation uses ec2:RunInstances?",
+    "goal": "My user can call ec2:RunInstances. Could that get me further than my own permissions?"
+  },
+  {
+    "id": "gcp-getaccesstoken",
+    "area": "permissions",
+    "expect": ["gcp-privilege-escalation/gcp-iam-privesc.md"],
+    "named": "How does iam.serviceAccounts.getAccessToken lead to privilege escalation?",
+    "goal": "My account was granted iam.serviceAccounts.getAccessToken. What does that let me reach?"
+  },
+  {
+    "id": "azure-roleassignments",
+    "area": "permissions",
+    "expect": ["az-privilege-escalation/az-authorization-privesc.md"],
+    "named": "How do I escalate with Microsoft.Authorization/roleAssignments/write?",
+    "goal": "My service principal has Microsoft.Authorization/roleAssignments/write. Can I give myself more rights?"
+  },
+  {
+    "id": "azure-vm-write",
+    "area": "permissions",
+    "expect": ["az-privilege-escalation/az-virtual-machines-and-network-privesc.md"],
+    "named": "Which privilege escalation needs Microsoft.Compute/virtualMachines/write?",
+    "goal": "Is Microsoft.Compute/virtualMachines/write on a subscription something an attacker can use?"
   }
 ]

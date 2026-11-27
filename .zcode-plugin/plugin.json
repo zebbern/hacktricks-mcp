@@ -1,7 +1,7 @@
 {
   "name": "hacktricks",
   "version": "0.1.5",
-  "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki, synced every 3 days.",
+  "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki and HackTricks Cloud (AWS, GCP, Azure, Kubernetes, CI/CD), plus a cloud permissions check. Synced every 3 days.",
   "author": {
     "name": "zebbern"
   },

@@ -2,7 +2,7 @@
   "$schema": "https://catalog.msh.team/misc/kimi.plugin.schema.json",
   "name": "hacktricks",
   "version": "0.1.0",
-  "description": "Search and read the HackTricks offensive-security wiki offline: pentesting, privilege escalation, web exploitation, Active Directory, cloud, Wi-Fi and forensics techniques via a bundled full-text index synced every 3 days.",
+  "description": "Search and read HackTricks and HackTricks Cloud offline, with a cloud permissions check: pentesting, privilege escalation, web exploitation, Active Directory, AWS, GCP, Azure, Kubernetes and CI/CD, synced every 3 days.",
   "keywords": [
     "hacktricks",
     "pentesting",
@@ -16,8 +16,8 @@
   "skillInstructions": "",
   "interface": {
     "displayName": "HackTricks",
-    "shortDescription": "Offline HackTricks security wiki search in Kimi",
-    "longDescription": "Search and read the HackTricks offensive-security wiki offline: pentesting, privilege escalation, web exploitation, Active Directory, cloud, Wi-Fi and forensics techniques via a bundled full-text index synced every 3 days.",
+    "shortDescription": "Offline HackTricks and Cloud lookup in Kimi",
+    "longDescription": "Search and read HackTricks and HackTricks Cloud offline, with a cloud permissions check: pentesting, privilege escalation, web exploitation, Active Directory, AWS, GCP, Azure, Kubernetes and CI/CD, synced every 3 days.",
     "developerName": "zebbern",
     "websiteURL": "https://github.com/zebbern/hacktricks-mcp",
     "iconUrl": "",
@@ -32,7 +32,7 @@
     "skillOverrides": {
       "hacktricks": {
         "displayName": "HackTricks",
-        "description": "Offline HackTricks security wiki search in Kimi"
+        "description": "Search HackTricks and check cloud permissions"
       }
     },
     "hostKind": "local",
@@ -44,7 +44,7 @@
     "mcpOverrides": {
       "hacktricks": {
         "displayName": "HackTricks",
-        "description": "Offline HackTricks security wiki search in Kimi"
+        "description": "Search HackTricks and check cloud permissions"
       }
     }
   },

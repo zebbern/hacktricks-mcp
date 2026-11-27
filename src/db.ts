@@ -5,36 +5,54 @@
 import { DatabaseSync, type SQLOutputValue } from "node:sqlite";
 import fs from "node:fs";
 import path from "node:path";
+import type { CombinationRow, EscalationRow, RiskRow, RuleRow } from "./permissions.js";
 
 export interface PageRow {
   page_id: number;
+  book: string;
   path: string;
   title: string;
   category: string;
   url: string;
+  wiki: string; // rendered page on the public wiki; empty when the book's table of contents does not list it
   outline: string; // JSON-serialized Heading[]
   content: string;
 }
 
 export interface SearchHit {
   page_id: number;
+  book: string;
   path: string;
   title: string;
   category: string;
   url: string;
+  wiki: string;
   chars: number; // page length, so a caller can choose between a whole read and the outline
   snippet: string;
 }
 
+/**
+ * Layout of the index files in data/. Bump it when a rebuild must reach every
+ * index although upstream has not moved: a layout change, or a change in how
+ * the indexer turns pages into rows (this file, src/toc.ts, src/markdown.ts,
+ * src/permissions.ts).
+ * The sync script then rebuilds, and a server ignores indexes built for another
+ * number (src/refresh.ts).
+ */
+export const INDEX_SCHEMA = 3;
+
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS pages (
   page_id INTEGER PRIMARY KEY,
-  path TEXT UNIQUE NOT NULL,
+  book TEXT NOT NULL,
+  path TEXT NOT NULL,
   title TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT '',
   url TEXT NOT NULL DEFAULT '',
+  wiki TEXT NOT NULL DEFAULT '',
   outline TEXT NOT NULL DEFAULT '[]',
-  content TEXT NOT NULL
+  content TEXT NOT NULL,
+  UNIQUE (book, path)
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS pages_fts USING fts5(
   title, path, category, content,
@@ -45,6 +63,42 @@ CREATE TRIGGER IF NOT EXISTS pages_ai AFTER INSERT ON pages BEGIN
   INSERT INTO pages_fts(rowid, title, path, category, content)
   VALUES (new.page_id, new.title, new.path, new.category, new.content);
 END;
+
+-- HackTricks Cloud's permission data (src/permissions.ts), for hacktricks_cloud_permissions.
+CREATE TABLE IF NOT EXISTS permission_risk (
+  provider TEXT NOT NULL,
+  permission TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  PRIMARY KEY (provider, permission)
+);
+CREATE TABLE IF NOT EXISTS permission_combination (
+  provider TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  permissions TEXT NOT NULL             -- JSON list; every permission must be held
+);
+CREATE TABLE IF NOT EXISTS escalation (
+  provider TEXT NOT NULL,
+  id TEXT NOT NULL,
+  service TEXT NOT NULL,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL,
+  severity TEXT NOT NULL,
+  confidence TEXT NOT NULL,
+  target TEXT NOT NULL,                  -- JSON { kind, scope, outcome }
+  source TEXT NOT NULL,                  -- <page path>#<anchor>
+  requires TEXT NOT NULL,                -- JSON, as the book writes it
+  needs TEXT NOT NULL,                   -- JSON list of the permissions named
+  conditions TEXT NOT NULL,              -- JSON list of sentences
+  blockers TEXT NOT NULL,                -- JSON list of identifiers
+  mitigation TEXT NOT NULL,
+  PRIMARY KEY (provider, id)
+);
+CREATE TABLE IF NOT EXISTS permission_rule (
+  provider TEXT NOT NULL,
+  position INTEGER NOT NULL,             -- the first rule that matches wins
+  rule TEXT NOT NULL,                    -- JSON, as the book writes it
+  PRIMARY KEY (provider, position)
+);
 `;
 
 export function createDb(dbPath: string): DatabaseSync {
@@ -52,6 +106,47 @@ export function createDb(dbPath: string): DatabaseSync {
   const db = new DatabaseSync(dbPath);
   db.exec(SCHEMA);
   return db;
+}
+
+/** Fill the permission tables with what src/permissions.ts made of HackTricks Cloud's data. */
+export function insertPermissionData(db: DatabaseSync, data: {
+  risk: RiskRow[];
+  combinations: CombinationRow[];
+  escalations: EscalationRow[];
+  rules: RuleRow[];
+}): void {
+  const inTransaction = <T>(run: () => T): T => {
+    db.exec("BEGIN");
+    try {
+      const result = run();
+      db.exec("COMMIT");
+      return result;
+    } catch (err) {
+      db.exec("ROLLBACK");
+      throw err;
+    }
+  };
+  inTransaction(() => {
+    const risk = db.prepare("INSERT INTO permission_risk (provider, permission, severity) VALUES (?, ?, ?)");
+    for (const row of data.risk) risk.run(row.provider, row.permission, row.severity);
+    const combination = db.prepare(
+      "INSERT INTO permission_combination (provider, severity, permissions) VALUES (?, ?, ?)",
+    );
+    for (const row of data.combinations) combination.run(row.provider, row.severity, JSON.stringify(row.permissions));
+    const escalation = db.prepare(
+      `INSERT INTO escalation (provider, id, service, title, summary, severity, confidence, target, source,
+                               requires, needs, conditions, blockers, mitigation)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    );
+    for (const row of data.escalations) {
+      escalation.run(
+        row.provider, row.id, row.service, row.title, row.summary, row.severity, row.confidence, row.target,
+        row.source, row.requires, row.needs, row.conditions, row.blockers, row.mitigation,
+      );
+    }
+    const rule = db.prepare("INSERT INTO permission_rule (provider, position, rule) VALUES (?, ?, ?)");
+    for (const row of data.rules) rule.run(row.provider, row.position, row.rule);
+  });
 }
 
 export function openDbReadonly(dbPath: string): DatabaseSync {
@@ -68,9 +163,9 @@ export function insertPage(
   page: Omit<PageRow, "page_id">,
 ): void {
   db.prepare(
-    `INSERT INTO pages (path, title, category, url, outline, content)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-  ).run(page.path, page.title, page.category, page.url, page.outline, page.content);
+    `INSERT INTO pages (book, path, title, category, url, wiki, outline, content)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(page.book, page.path, page.title, page.category, page.url, page.wiki, page.outline, page.content);
 }
 
 /**
@@ -128,6 +223,35 @@ function queryTerms(query: string): string[] {
 
 const quote = (s: string) => `"${s.replace(/"/g, '""')}"`;
 
+/**
+ * Endings dropped from a query word before it is looked for in titles and
+ * paths, applied in turn and only while at least `minStem` letters remain.
+ * A title uses one word form and a question another ("Privilege Escalation"
+ * against "escalate privileges"); the full-text match is stemmed, and without
+ * this the title match was not: "escalate" never matched "escalation".
+ */
+const NAME_ENDINGS: [ending: string, replacement: string, minStem: number][] = [
+  ["sses", "ss", 4],
+  ["ies", "", 4],
+  ["es", "", 4],
+  ["s", "", 3],
+  ["ation", "", 4],
+  ["ment", "", 4],
+  ["ing", "", 4],
+  ["ate", "", 4],
+  ["ed", "", 4],
+];
+
+/** The stem prefix a word is matched by in titles and paths: "escalating" gives "escalat". */
+function nameKey(word: string): string {
+  let w = word.toLowerCase();
+  for (let rule = NAME_ENDINGS.find(([ending, , minStem]) => w.endsWith(ending) && w.length - ending.length >= minStem); rule; ) {
+    w = w.slice(0, w.length - rule[0].length) + rule[1];
+    rule = NAME_ENDINGS.find(([ending, , minStem]) => w.endsWith(ending) && w.length - ending.length >= minStem);
+  }
+  return w;
+}
+
 /** FTS5 match for one term: the term itself, or an abbreviation plus its expansion. */
 function termExpr(term: string): string {
   const alias = ALIASES[term.toLowerCase()];
@@ -145,8 +269,9 @@ function pageCount(db: DatabaseSync): number {
 }
 
 // Title and path with separators folded to spaces. A term is credited when a
-// word in there starts with it, so "string" matches "strings" while "nc" no
-// longer matches "function".
+// word in there starts with its stem (NAME_ENDINGS), so "escalate" matches
+// "escalation" and "string" matches "strings", while "nc" does not match
+// "function".
 const NAME_SQL =
   "lower(replace(replace(replace(replace(replace(replace(p.title || ' ' || p.path, '/', ' '), '-', ' '), '_', ' '), '.', ' '), '(', ' '), ')', ' '))";
 const TERM_IN_NAME_SQL = `' ' || ${NAME_SQL} || ' ' LIKE '% ' || ? || '%'`;
@@ -188,12 +313,33 @@ const SPECIFIC_FRACTION = 0.2;
 const NAMING_RATE = 0.6;
 
 /**
+ * A term found in at least this fraction of the pages takes no part in name
+ * credit (it gains a page nothing and costs it nothing), with one exception
+ * below. Name rarity alone overrates such words: two thirds of the pages
+ * contain "id" but only 42 titles name it, so it was worth as much as a
+ * technique name, and "Az - Entra ID Logs" outranked "Az - EntraID Privesc"
+ * for a question about privilege escalation in Entra ID.
+ */
+const NAME_SHARE = 0.5;
+
+/**
+ * The exception: a very common term still counts when the pages that contain
+ * it name it in their title or path at least this often, because then it is
+ * what pages are about. Pages that contain "id" name it 2% of the time. Pages
+ * that contain "post" name it 27% of the time, although "post" is in 61% of
+ * the pages because Cloud pages repeat their phase names; left out, "S3 post
+ * exploitation" returned S3 privesc and enum pages first.
+ */
+const TITLE_RATE = 0.05;
+
+/**
  * How much holding every specific query term is worth, on the same scale as
  * name credit: as much as naming a term that about one page in 250 names.
  * Lower lets a page whose title carries a rare word win while missing an
  * incidental one; higher favours pages that contain all the specific words.
- * Measured against tests/scenarios.json (scripts/eval-strategies.ts), where
- * 4 to 6 land within two scenarios of each other.
+ * Measured on tests/scenarios.json with scripts/eval-workflow.ts: every value
+ * from 4 to 10 ends with the same questions found by the route the skill
+ * gives, and the rest moves by a question or two either way.
  */
 const MATCH_BONUS = 5;
 /** How many candidates to consider per pool; only `limit` are returned. */
@@ -208,12 +354,13 @@ const POOL = 50;
  *    incidental word ("bug") that the page named after the technique does not
  *    use, so matching everything is not required of the best answer.
  * 3. Rank the combined pool by name credit, a likelihood ratio on how few
- *    pages name each query term in their title or path, plus a bonus for
- *    holding every specific term. That puts the page named after the technique
- *    above hub pages that merely contain the words.
+ *    pages name each query term in their title or path (by stem, and only
+ *    for terms that are not in half of the pages, see NAME_SHARE), plus a
+ *    bonus for holding every specific term. That puts the page named after
+ *    the technique above hub pages that merely contain the words.
  *
- * Measured by scripts/eval-strategies.ts; the numbers that justified each step
- * are in docs/development.md.
+ * Measured by scripts/eval.ts and scripts/eval-workflow.ts; the numbers and
+ * the ideas that were rejected are in docs/development.md.
  */
 export function searchPages(
   db: DatabaseSync,
@@ -238,11 +385,18 @@ export function searchPages(
   // in hundreds of page bodies but a handful of titles). An abbreviation counts
   // by its own spelling first ("privesc" outranks the common words it expands
   // to), and a term with separators needs all of its parts ("ld.so.conf").
+  // Terms that are everywhere are left out unless pages that contain them
+  // name them often enough to be what the page is about.
+  const named = terms.filter(
+    (t) => t.pages < total * NAME_SHARE || pagesNaming(db, [nameKey(t.term)]) >= t.pages * TITLE_RATE,
+  );
   const creditSql: string[] = [];
   const creditParams: (string | number)[] = [];
-  terms.forEach(({ term }, i) => {
+  named.forEach(({ term }, i) => {
     const alias = ALIASES[term.toLowerCase()];
-    const spellings = alias ? [term, ...alias.split(" ")].map((word) => [word]) : [term.split(/[^\w]+/).filter(Boolean)];
+    const spellings = alias
+      ? [term, ...alias.split(" ")].map((word) => [nameKey(word)])
+      : [term.split(/[^\w]+/).filter(Boolean).map(nameKey)];
     const weighted = spellings
       .map((words) => ({ words, naming: pagesNaming(db, words) }))
       .map((s) => ({ ...s, weight: s.naming > 0 ? Math.log((NAMING_RATE * total) / s.naming) : 0 }))
@@ -260,8 +414,8 @@ export function searchPages(
   // Each query term a page does not name counts against it, so a title that
   // covers the query beats one naming a single rare word of it.
   const creditOf = (row: Record<string, SQLOutputValue>): number => {
-    let credit = Math.log(1 - NAMING_RATE) * terms.length;
-    for (let i = 0; i < terms.length; i++) credit += Number(row[`c${i}`]);
+    let credit = Math.log(1 - NAMING_RATE) * named.length;
+    for (let i = 0; i < named.length; i++) credit += Number(row[`c${i}`]);
     return credit;
   };
 
@@ -272,8 +426,8 @@ export function searchPages(
   // topic.
   const candidates = (expr: string, alsoByCredit = false): Candidate[] => {
     const select = (order: string) => `
-      SELECT p.page_id, p.path, p.title, p.category, p.url, length(p.content) AS chars,
-             bm25(pages_fts, 10.0, 8.0, 5.0, 1.0) AS relevance, ${creditSql.join(", ")}
+      SELECT p.page_id, p.book, p.path, p.title, p.category, p.url, p.wiki, length(p.content) AS chars,
+             bm25(pages_fts, 10.0, 8.0, 5.0, 1.0) AS relevance${creditSql.length ? `, ${creditSql.join(", ")}` : ""}
       FROM pages_fts JOIN pages p ON p.page_id = pages_fts.rowid
       WHERE pages_fts MATCH ?
       ${category ? "AND lower(p.category) LIKE lower(?)" : ""}
@@ -285,10 +439,12 @@ export function searchPages(
     params.push(POOL);
     const toHit = (row: Record<string, SQLOutputValue>): Candidate => ({
       page_id: Number(row.page_id),
+      book: String(row.book),
       path: String(row.path),
       title: String(row.title),
       category: String(row.category),
       url: String(row.url),
+      wiki: String(row.wiki),
       chars: Number(row.chars),
       relevance: Number(row.relevance),
       boost: creditOf(row),
@@ -296,10 +452,9 @@ export function searchPages(
     const byRelevance = db.prepare(select("relevance")).all(...params).map(toHit);
     if (!alsoByCredit) return byRelevance;
     const seen = new Set(byRelevance.map((h) => h.page_id));
-    const byCredit = db
-      .prepare(select(`(${creditSql.map((_, i) => `(c${i})`).join(" + ")}) DESC`))
-      .all(...params)
-      .map(toHit);
+    // A query whose every term is too common for name credit has no credit to order by.
+    const byCreditOrder = creditSql.length ? `(${creditSql.map((_, i) => `(c${i})`).join(" + ")}) DESC` : "relevance";
+    const byCredit = db.prepare(select(byCreditOrder)).all(...params).map(toHit);
     return [...byRelevance, ...byCredit.filter((h) => !seen.has(h.page_id))];
   };
 
@@ -340,22 +495,31 @@ function pagesMatching(db: DatabaseSync, expr: string): number {
     .n;
 }
 
-export function getPage(db: DatabaseSync, pagePath: string): PageRow | null {
-  const row = db
-    .prepare(`SELECT * FROM pages WHERE path = ?`)
-    .get(pagePath) as unknown as PageRow | undefined;
-  if (row) return row;
+/**
+ * Find a page by path. `book` settles the few paths that exist in both books
+ * (README.md); without it the main book wins.
+ */
+export function getPage(db: DatabaseSync, pagePath: string, book?: string): PageRow | null {
+  const only = book ? "AND book = ?" : "";
+  const scope = book ? [book] : [];
+  const exact = db
+    .prepare(`SELECT * FROM pages WHERE path = ? ${only} ORDER BY book LIMIT 1`)
+    .get(pagePath, ...scope) as unknown as PageRow | undefined;
+  if (exact) return exact;
   // Convenience: allow suffix matches like "kerberoast" or "ntlm/README.md"
   const like = db
-    .prepare(`SELECT * FROM pages WHERE path LIKE ? ORDER BY length(path) LIMIT 1`)
-    .get(`%${pagePath.replace(/%/g, "")}%`) as unknown as PageRow | undefined;
+    .prepare(`SELECT * FROM pages WHERE path LIKE ? ${only} ORDER BY length(path), book LIMIT 1`)
+    .get(`%${pagePath.replace(/%/g, "")}%`, ...scope) as unknown as PageRow | undefined;
   return like ?? null;
 }
 
-export function listCategories(db: DatabaseSync): { category: string; pages: number }[] {
+/** Page counts per book and category, in the order the table of contents lists them. */
+export function listCategories(
+  db: DatabaseSync,
+): { book: string; category: string; pages: number }[] {
   return db
     .prepare(
-      `SELECT category, count(*) AS pages FROM pages GROUP BY category ORDER BY pages DESC`,
+      `SELECT book, category, count(*) AS pages FROM pages GROUP BY book, category ORDER BY min(page_id)`,
     )
-    .all() as unknown as { category: string; pages: number }[];
+    .all() as unknown as { book: string; category: string; pages: number }[];
 }

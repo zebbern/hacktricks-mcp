@@ -1,0 +1,110 @@
+[
+  {
+    "provider": "aws",
+    "permissions": ["iam:CreatePolicyVersion"],
+    "risk": { "iam:CreatePolicyVersion": "critical" },
+    "listed": ["aws-iam-createpolicyversion-self", "aws-iam-createpolicyversion-assumable-role"],
+    "notListed": ["aws-iam-createpolicyversion-by--iam:UpdateAssumeRolePolicy"]
+  },
+  {
+    "provider": "aws",
+    "permissions": ["iam:PassRole", "lambda:CreateFunction"],
+    "risk": { "iam:PassRole": "critical", "lambda:CreateFunction": "high" },
+    "first": "aws-lambda-microvm-passrole-runmicrovm-shell",
+    "notListed": ["aws-iam-createpolicyversion-self"]
+  },
+  {
+    "provider": "aws",
+    "permissions": ["s3:GetObject", "s3:ListBucket"],
+    "risk": { "s3:GetObject": "high", "s3:ListBucket": "low" },
+    "noTechniques": true
+  },
+  {
+    "provider": "aws",
+    "permissions": ["iam:*"],
+    "risk": { "iam:*": "critical" },
+    "noteContains": "rated permissions",
+    "listed": ["aws-iam-createpolicyversion-self"]
+  },
+  {
+    "provider": "aws",
+    "permissions": ["ec2:DescribeInstances"],
+    "risk": { "ec2:DescribeInstances": "low" },
+    "noTechniques": true
+  },
+  {
+    "provider": "gcp",
+    "permissions": ["iam.serviceAccounts.getAccessToken"],
+    "risk": { "iam.serviceAccounts.getAccessToken": "critical" },
+    "listed": ["gcp-iam-serviceaccounts-getaccesstoken"]
+  },
+  {
+    "provider": "gcp",
+    "permissions": ["storage.objects.get"],
+    "risk": { "storage.objects.get": "high" },
+    "noTechniques": true
+  },
+  {
+    "provider": "azure",
+    "permissions": ["Microsoft.Authorization/roleAssignments/write"],
+    "risk": { "Microsoft.Authorization/roleAssignments/write": "critical" },
+    "noTechniques": true,
+    "sections": { "Microsoft.Authorization/roleAssignments/write": "az-authorization-privesc.md" }
+  },
+  {
+    "provider": "azure",
+    "permissions": ["Application.ReadWrite.All"],
+    "risk": { "Application.ReadWrite.All": "critical" },
+    "listed": ["azure-entraid-graph-application-readwrite-all", "azure-entraid-sp-credentials-update"]
+  },
+  {
+    "provider": "k8s",
+    "permissions": ["create pods"],
+    "risk": { "create pods": "high" },
+    "listed": ["k8s-nodes-privileged-pod-create"]
+  },
+  {
+    "provider": "k8s",
+    "permissions": ["create pods/exec"],
+    "risk": { "create pods/exec": "high" },
+    "noteContains": "sensitive Pod subresource"
+  },
+  {
+    "provider": "k8s",
+    "permissions": ["get *"],
+    "risk": { "get *": "high" },
+    "listed": ["k8s-rbac-secrets-read-legacy-sa-token"]
+  },
+  {
+    "provider": "k8s",
+    "permissions": ["impersonate users"],
+    "risk": { "impersonate users": "critical" },
+    "listed": ["k8s-rbac-impersonate-users"],
+    "notListed": ["k8s-rbac-constrained-impersonation-user"]
+  },
+  {
+    "provider": "k8s",
+    "permissions": ["list pods"],
+    "risk": { "list pods": "medium" },
+    "noTechniques": true
+  },
+  {
+    "provider": "aws",
+    "permissions": [" iam:createpolicyversion ", "IAM:CREATEPOLICYVERSION"],
+    "risk": { "iam:CreatePolicyVersion": "critical" },
+    "listed": ["aws-iam-createpolicyversion-self"]
+  },
+  {
+    "provider": "gcp",
+    "permissions": ["IAM.ServiceAccounts.getAccessToken", "roles/iam.serviceAccountTokenCreator"],
+    "risk": { "IAM.ServiceAccounts.getAccessToken": "not rated", "roles/iam.serviceAccountTokenCreator": "not rated" },
+    "noTechniques": true
+  },
+  {
+    "provider": "azure",
+    "permissions": ["microsoft.authorization/roleassignments/write"],
+    "risk": { "Microsoft.Authorization/roleAssignments/write": "critical" },
+    "noTechniques": true,
+    "sections": { "microsoft.authorization/roleassignments/write": "az-authorization-privesc.md" }
+  }
+]

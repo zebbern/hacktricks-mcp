@@ -28,5 +28,17 @@
   { "query": "reverse shells cheat sheet", "expectPath": "reverse-shells" },
   { "query": "tunneling port forwarding", "expectPath": "tunneling" },
   { "query": "wifi evil twin attack", "expectPath": "evil-twin" },
-  { "query": "volatility memory analysis", "expectPath": "volatility" }
+  { "query": "volatility memory analysis", "expectPath": "volatility" },
+  { "query": "aws iam privilege escalation", "expectPath": "aws-iam-privesc" },
+  { "query": "gcp iam privesc", "expectPath": "gcp-iam-privesc" },
+  { "query": "s3 bucket post exploitation", "expectPath": "aws-s3-post-exploitation" },
+  { "query": "kubernetes privilege escalation", "expectPath": "kubernetes-privilege-escalation" },
+  { "query": "Kubernetes RBAC enumeration", "expectPath": "rbac-objects" },
+  { "query": "azure password spraying", "expectPath": "az-password-spraying" },
+  { "query": "Entra ID persistence techniques", "expectPath": "az-entraid-persistence" },
+  { "query": "jenkins groovy script rce", "expectPath": "jenkins-rce-with-groovy-script" },
+  { "query": "github actions cache poisoning", "expectPath": "gh-actions-cache-poisoning" },
+  { "query": "terraform state file secrets", "expectPath": "terraform-security" },
+  { "query": "circleci security", "expectPath": "circleci-security" },
+  { "query": "argo cd security", "expectPath": "argocd-security" }
 ]

@@ -1,8 +1,8 @@
 # hacktricks-mcp
 
-MCP server that gives AI agents fast, offline full-text search and section-level retrieval over the [HackTricks](https://github.com/HackTricks-wiki/hacktricks) offensive-security wiki.
+MCP server that gives AI agents fast, offline full-text search and section-level retrieval over two HackTricks books: the [HackTricks](https://github.com/HackTricks-wiki/hacktricks) offensive-security wiki (network services, web, Linux, Windows and macOS hardening, Active Directory, mobile, reverse engineering, forensics, Wi-Fi) and [HackTricks Cloud](https://github.com/HackTricks-wiki/hacktricks-cloud) (AWS, GCP, Azure, Kubernetes, CI/CD). It also checks cloud permissions against HackTricks Cloud's rated lists and escalation catalog: how dangerous a permission is, what it lets a principal escalate to, and where to read about it.
 
-Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5 search index** (1,000+ pages) inside the package. No install-time clone, no ripgrep dependency, no network access at query time. A GitHub Action re-syncs the index with upstream **every 3 days**, commits it back to this repo and publishes a patch release to npm, so an unpinned install picks up each new index on its next launch.
+Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5 search index** (about 2,950 pages) inside the package. No install-time clone, no ripgrep dependency, and no network access at any query. A GitHub Action re-syncs the index with upstream **every 3 days**, commits it back to this repo and publishes a patch release to npm, so an unpinned install picks up each new index on its next launch. A running server also checks for a newer index in the background and switches to it when there is one, falling back to the bundled index whenever that fails (offline included).
 
 ## Quick start
 
@@ -53,21 +53,36 @@ Then ask things like:
 - *"Search HackTricks for kerberoast and give me the attack commands"*
 - *"How do I escalate privileges from the lxd group?"*
 - *"Show me the SSRF section of the pentesting-web pages"*
+- *"What can I do with access to a Jenkins script console?"*
+- *"List every HackTricks page about AWS IAM"*
+- *"Is `iam:CreatePolicyVersion` dangerous? What can I do with `iam:PassRole` and `lambda:CreateFunction`?"*
 
 ## Tools at a glance
 
 | Tool | What it does |
 |---|---|
-| `hacktricks_search` | Ranked full-text search that takes a plain question or technical terms, with snippets, abbreviation handling (`privesc`, `sqli`, `rce`, ...) and an optional platform filter |
-| `hacktricks_get_page` | Read a page's section list with sizes, a single section, the whole page, or just its code blocks |
-| `hacktricks_get_toc` | The wiki category tree, so agents can see where topics live |
+| `hacktricks_search` | Ranked full-text search over both books that takes a plain question or technical terms, with snippets, abbreviation handling (`privesc`, `sqli`, `rce`, ...) and an optional category filter |
+| `hacktricks_get_page` | Read a page's section list with sizes, a single section, the whole page, or just its code blocks; the first lines carry the link to cite |
+| `hacktricks_get_toc` | A compact map of both books (categories and chapters with page counts), or the pages under the entries matching a filter |
+| `hacktricks_cloud_permissions` | Rate cloud permissions (AWS, GCP, Azure, Kubernetes) against HackTricks Cloud and list the escalation techniques they enable, with the page section that explains each |
 
 All tools are strictly read-only. Full reference: [docs/tools.md](docs/tools.md).
+
+## Environment variables
+
+| Variable | Effect |
+|---|---|
+| `HACKTRICKS_OFFLINE=1` | Never use the network: no background check for a newer index |
+| `HACKTRICKS_INDEX_URL` | Download newer indexes from this base URL instead of this project's releases |
+| `HACKTRICKS_CACHE_DIR` | Where downloaded indexes are kept |
+| `HACKTRICKS_DB` | Serve the database at this path; the background check stays off |
+
+How the refresh works and how it fails safely: [docs/architecture.md](docs/architecture.md#runtime-index-refresh).
 
 ## Documentation
 
 - [docs/tools.md](docs/tools.md): complete tool reference with parameters and examples
-- [docs/architecture.md](docs/architecture.md): how the index and the 3-day sync work
+- [docs/architecture.md](docs/architecture.md): how the index, the 3-day sync and the background refresh work
 - [docs/development.md](docs/development.md): local setup, tests, releasing
 - [docs/agents.md](docs/agents.md): agent skill, MCP registry and plugin packaging
 
@@ -79,5 +94,5 @@ All tools are strictly read-only. Full reference: [docs/tools.md](docs/tools.md)
 
 ## Credits
 
-- [HackTricks](https://github.com/HackTricks-wiki/hacktricks) by Carlos Polop and contributors
+- [HackTricks](https://github.com/HackTricks-wiki/hacktricks) and [HackTricks Cloud](https://github.com/HackTricks-wiki/hacktricks-cloud) by Carlos Polop and contributors
 - [Model Context Protocol SDK](https://github.com/modelcontextprotocol/typescript-sdk)
