@@ -8,8 +8,8 @@ Thanks for improving hacktricks-mcp. This project has a few structural invariant
 
 `skills/hacktricks/SKILL.md` is the only hand-edited skill file. It follows the [Agent Skills](https://agentskills.io) standard (spec-clean frontmatter: `name` + `description` only; vendor-specific fields break other hosts).
 
-- Claude Code and Codex plugins read this file directly from the plugin root. Do not create copies for them.
-- `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy (Kimi plugins install as self-contained directories). Never edit it by hand. Run `npm run sync:skills` after touching the canonical file. CI fails on drift.
+- Claude Code, Codex and ZCode plugins read this file directly from the plugin root. Do not create copies for them.
+- `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy (Kimi plugins install as self-contained directories). Never edit it by hand. Run `npm run sync:skills` after touching the canonical file.
 - The `description` frontmatter is the trigger that decides whether agents load the skill. Treat it as a public API: specific, keyword-rich, under 1024 chars.
 
 ### 2. Version consistency
