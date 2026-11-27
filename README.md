@@ -11,13 +11,13 @@ Requirements: Node.js 22.13 or newer (uses the built-in `node:sqlite`, zero nati
 **Claude Code:**
 
 ```bash
-claude mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp
+claude mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp@latest
 ```
 
 **Codex CLI:**
 
 ```bash
-codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp
+codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp@latest
 ```
 
 **Any MCP client** (Claude Desktop, Cursor, Kimi, etc.), config JSON:
@@ -27,7 +27,7 @@ codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp
   "mcpServers": {
     "hacktricks": {
       "command": "npx",
-      "args": ["-y", "@zebbern/hacktricks-mcp"]
+      "args": ["-y", "@zebbern/hacktricks-mcp@latest"]
     }
   }
 }
