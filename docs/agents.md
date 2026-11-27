@@ -21,6 +21,8 @@ mcp-publisher publish        # from the repo root, after npm has the new version
 
 The registry verifies npm ownership via the `mcpName` field in `package.json`, and requires `server.json` `version` + `packages[].version` to match the published npm version exactly. `description` must stay under 100 characters.
 
+Index syncs publish a patch release on their own (see [architecture.md](architecture.md#sync-automation)), so the registry listing drifts until this command is re-run after each one. The Release workflow prints a reminder when it publishes.
+
 ## Claude Code, Codex and Kimi plugin packaging
 
 This repo doubles as an installable plugin for three ecosystems:

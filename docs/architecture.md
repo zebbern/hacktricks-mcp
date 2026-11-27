@@ -73,8 +73,11 @@ An `AFTER INSERT` trigger keeps the FTS table in sync. Ranking details live in [
 1. `npm run sync` (skips cleanly if the upstream SHA is unchanged)
 2. `npm run eval` (quality gate, see below)
 3. commits `data/` and tags `index-YYYY.MM.DD-<sha>` when the index changed
+4. on a change, bumps the patch version (`npm version patch`, which also stamps the manifests and tags `vX.Y.Z`), pushes it and dispatches `release.yml` on that tag
 
-Because the SHA check happens first, quiet weeks produce zero commits and zero noise.
+Every install path resolves to the npm package, so a committed index only reaches users once it is released. Step 4 closes that gap: one sync, one patch release. The dispatch is explicit because a tag pushed with `GITHUB_TOKEN` does not fire the `push` trigger in `release.yml`; `workflow_dispatch` always does.
+
+Because the SHA check happens first, quiet weeks produce zero commits, zero releases and zero noise.
 
 ## Quality gate
 

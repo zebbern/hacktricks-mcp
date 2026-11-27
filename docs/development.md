@@ -71,9 +71,9 @@ One-time prerequisites (already done for this repo): the first publish was manua
 
 ### What ships in the package
 
-Defined by `files` in `package.json`: `dist/`, `data/hacktricks.db`, `data/toc.json`, `data/meta.json`. The index inside the package is whatever the last sync committed, so cutting a release right after a sync gives users the freshest content.
+Defined by `files` in `package.json`: `dist/`, `data/hacktricks.db`, `data/toc.json`, `data/meta.json`. The index inside the package is whatever the last sync committed, and every sync publishes a release, so users always get the freshest index that passed the eval gate.
 
 ## CI
 
 - `ci.yml` on push/PR: typecheck, build, full index rebuild, eval, stdio smoke test.
-- `sync.yml` every 3 days: see [architecture.md](architecture.md#sync-automation).
+- `sync.yml` every 3 days: index rebuild plus an automatic patch release, see [architecture.md](architecture.md#sync-automation).

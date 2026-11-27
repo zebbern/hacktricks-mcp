@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write # dispatch the Release workflow, see "Publish release" below
 
 jobs:
   sync:
@@ -30,6 +31,7 @@ jobs:
         run: npm run eval
 
       - name: Commit updated index
+        id: commit
         run: |
           if git diff --quiet -- data/; then
             echo "Index unchanged, nothing to commit"
@@ -41,12 +43,32 @@ jobs:
           git add data/
           git commit -m "chore: sync index with HackTricks upstream ${SHA}"
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
-      - name: Tag release
-        if: success()
+      - name: Tag index snapshot
+        if: steps.commit.outputs.changed == 'true'
         run: |
           SHA=$(node -p "require('./data/meta.json').upstreamSha.slice(0,7)")
           TAG="index-$(date +%Y.%m.%d)-${SHA}"
           if git rev-parse "$TAG" >/dev/null 2>&1; then exit 0; fi
           git tag "$TAG"
           git push origin "$TAG"
+
+      # Every install path resolves to the npm package, so a committed index
+      # only reaches users once it is released. npm version also stamps the
+      # manifests (version-sync lifecycle hook) and creates the vX.Y.Z tag.
+      - name: Bump patch version
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          npm version patch -m "chore: release v%s"
+          git push --follow-tags
+
+      - name: Publish release
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A tag pushed with GITHUB_TOKEN does not trigger release.yml on its
+          # own, so dispatch it on the tag that was just created.
+          TAG="v$(node -p "require('./package.json').version")"
+          gh workflow run release.yml --ref "$TAG"

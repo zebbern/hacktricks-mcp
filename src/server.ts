@@ -25,8 +25,10 @@ const meta = fs.existsSync(META_PATH)
   ? JSON.parse(fs.readFileSync(META_PATH, "utf8"))
   : { upstreamSha: "unknown", syncedAt: "unknown", pageCount: 0 };
 
+const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, "package.json"), "utf8"));
+
 const server = new McpServer(
-  { name: "hacktricks-mcp", version: meta.version ?? "0.1.0" },
+  { name: "hacktricks-mcp", version: pkg.version },
   {
     instructions: [
       "HackTricks wiki knowledge base (offensive security: pentesting, privilege escalation,",

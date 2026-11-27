@@ -16,11 +16,13 @@ Thanks for improving hacktricks-mcp. This project has a few structural invariant
 
 `npm version patch|minor|major` is the only way to bump versions. The lifecycle hook stamps `server.json` (including `packages[].version`), `.claude-plugin/plugin.json`, and `.codex-plugin/plugin.json` and stages them into the version commit. Never hand-edit version fields in those files.
 
+Index-only releases use the same command: `sync.yml` runs `npm version patch` whenever the index changes, so an index change never needs a manual bump.
+
 Exception: `kimi-plugin/kimi.plugin.json` is versioned by the Kimi marketplace tooling (`+local` timestamps), not by npm.
 
 ### 3. The index is generated, but committed
 
-`data/` is produced by `npm run sync` from upstream HackTricks and is committed to the repo (so clones and the npm package work out of the box). Do not hand-edit `data/hacktricks.db`, `data/toc.json`, or `data/meta.json`. The sync workflow re-runs every 3rd day; manual syncs happen via `npm run sync`.
+`data/` is produced by `npm run sync` from upstream HackTricks and is committed to the repo (so clones and the npm package work out of the box). Do not hand-edit `data/hacktricks.db`, `data/toc.json`, or `data/meta.json`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the index changes; manual syncs happen via `npm run sync`.
 
 ### 4. Search quality is gated
 

@@ -2,7 +2,7 @@
 
 MCP server that gives AI agents fast, offline full-text search and section-level retrieval over the [HackTricks](https://github.com/HackTricks-wiki/hacktricks) offensive-security wiki.
 
-Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5 search index** (1,000+ pages) inside the package. No install-time clone, no ripgrep dependency, no network access at query time. A GitHub Action re-syncs the index with upstream **every 3 days** and commits it back to this repo.
+Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5 search index** (1,000+ pages) inside the package. No install-time clone, no ripgrep dependency, no network access at query time. A GitHub Action re-syncs the index with upstream **every 3 days**, commits it back to this repo and publishes a patch release to npm, so an unpinned install picks up each new index on its next launch.
 
 ## Quick start
 

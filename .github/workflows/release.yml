@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    # sync.yml dispatches this on the new v* tag after an index change. A tag
+    # pushed with GITHUB_TOKEN does not fire the push trigger above.
 
 permissions:
   contents: write
@@ -24,6 +27,11 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # Only used when this is dispatched on a branch instead of a v* tag.
+      - name: Resolve version tag
+        id: tag
+        run: echo "name=v$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Refresh index from upstream
         run: npm run sync
 
@@ -36,6 +44,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || steps.tag.outputs.name }}
           files: |
             data/hacktricks.db
             data/toc.json
