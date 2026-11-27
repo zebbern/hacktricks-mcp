@@ -32,10 +32,12 @@ const server = new McpServer(
   {
     instructions: [
       "HackTricks wiki knowledge base (offensive security: pentesting, privilege escalation,",
-      "web exploitation, Active Directory, cloud, Wi-Fi, forensics, macOS/Windows/Linux).",
+      "web exploitation, Active Directory, Wi-Fi, forensics, macOS/Windows/Linux).",
       "Use hacktricks_search to find relevant pages, then hacktricks_get_page to read them.",
       "Prefer section= or codeOnly= on get_page to keep responses small.",
       `Index covers ${meta.pageCount} pages, synced from upstream at ${meta.syncedAt}.`,
+      "Cloud providers (AWS, GCP, Azure), Kubernetes and CI/CD are in the separate HackTricks",
+      "Cloud book, not this index: https://cloud.hacktricks.wiki.",
     ].join(" "),
   },
 );
