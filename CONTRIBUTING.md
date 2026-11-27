@@ -61,7 +61,7 @@ npm version patch -m "chore: release v%s" && git push --follow-tags
 
 The message is the one `sync.yml` uses; without `-m`, npm titles the commit with the bare version number.
 
-This triggers `release.yml`: full quality gates, GitHub Release with index assets, npm publish and an MCP registry publish, both through OIDC trusted publishing. If the registry step fails, the package is already out; publish the listing by hand from the released tag ([docs/agents.md](docs/agents.md#mcp-registry)):
+This triggers `release.yml`: full quality gates, GitHub Release with index assets, npm publish and, in a second job, an MCP registry publish, both through OIDC trusted publishing. That job waits for npm to serve the version and can be re-run on its own. If the registry refuses, the package is already out; publish the listing by hand from the released tag ([docs/agents.md](docs/agents.md#mcp-registry)):
 
 ```bash
 mcp-publisher validate && mcp-publisher publish

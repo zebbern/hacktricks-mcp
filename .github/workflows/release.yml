@@ -6,7 +6,9 @@ on:
       - "v*"
   workflow_dispatch:
     # sync.yml dispatches this on the new v* tag after an index change. A tag
-    # pushed with GITHUB_TOKEN does not fire the push trigger above.
+    # pushed with GITHUB_TOKEN does not fire the push trigger above. Dispatched
+    # on a branch, it releases the version the branch holds, and repeats nothing
+    # that an earlier run already did for that version.
 
 permissions:
   contents: write
@@ -62,9 +64,24 @@ jobs:
           generate_release_notes: true
 
       # Trusted publishing: OIDC auth via id-token, provenance is automatic
-      # for public repo + public package. No NPM_TOKEN needed.
+      # for public repo + public package. No NPM_TOKEN needed. npm never
+      # replaces a version, so a run dispatched again for one that npm already
+      # has, for example to redo the registry job, must not fail here.
       - name: Publish to npm
-        run: npm publish --access public
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          URL="https://registry.npmjs.org/@zebbern%2Fhacktricks-mcp/$VERSION"
+          if curl -fsS -o /dev/null -H "Cache-Control: no-cache" "$URL"; then
+            echo "npm already serves $VERSION, not publishing again"
+            exit 0
+          fi
+          out="$(npm publish --access public 2>&1)"; rc=$?
+          echo "$out"
+          if [ $rc -ne 0 ] && echo "$out" | grep -q "cannot publish over the previously published versions"; then
+            echo "npm already has $VERSION, not publishing again"
+            exit 0
+          fi
+          exit $rc
 
       # Housekeeping, after everything that must succeed: running servers only
       # ever download the latest release (src/refresh.ts), so older releases
@@ -85,9 +102,27 @@ jobs:
                 gh release delete-asset "$tag" "$asset" --yes
               done
 
-      # The registry lists a server by npm version, so its listing would go
-      # stale with every release unless it is published here as well. Its
-      # trusted publishing works like npm's: OIDC, no stored token.
+  # The registry lists a server by npm version, so its listing would go stale
+  # with every release unless it is published here as well. Its trusted
+  # publishing works like npm's: OIDC, no stored token. This is a job of its
+  # own because it waits on something outside this repository: npm keeps a new
+  # version for validation before it serves it, and that took longer than the
+  # seven minutes an earlier version of this workflow allowed. If npm is slower
+  # than the hour below, "re-run failed jobs" repeats only this job.
+  registry:
+    runs-on: ubuntu-latest
+    needs: publish
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Resolve version
+        id: version
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Install mcp-publisher (pinned + checksum-verified)
         run: |
           VERSION="v1.8.21"
@@ -97,20 +132,21 @@ jobs:
           grep " mcp-publisher_linux_amd64.tar.gz$" checksums.txt | sha256sum -c -
           tar xzf mcp-publisher_linux_amd64.tar.gz mcp-publisher
 
-      # The registry checks the package on npm, which takes a moment to serve
-      # a version that was just published.
-      - name: Wait for npm to serve the new version
+      # Asked directly, without npm's cache: the registry checks the package on
+      # npm, which does not serve a version until its validation is done.
+      - name: Wait for npm to serve the version
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          for i in $(seq 1 20); do
-            if npm view "@zebbern/hacktricks-mcp@$VERSION" version 2>/dev/null | grep -q "$VERSION"; then
+          VERSION="${{ steps.version.outputs.version }}"
+          URL="https://registry.npmjs.org/@zebbern%2Fhacktricks-mcp/$VERSION"
+          for i in $(seq 1 120); do
+            if curl -fsS -o /dev/null -H "Cache-Control: no-cache" "$URL"; then
               echo "npm serves $VERSION"
               exit 0
             fi
             echo "waiting for npm... (attempt $i)"
-            sleep 20
+            sleep 30
           done
-          echo "npm did not serve $VERSION within 7 minutes"
+          echo "npm still does not serve $VERSION after an hour; re-run this job once it does"
           exit 1
 
       # A failure here is meant to fail the run: the package and the GitHub
