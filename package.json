@@ -1,6 +1,6 @@
 {
   "name": "@zebbern/hacktricks-mcp",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "mcpName": "io.github.zebbern/hacktricks-mcp",
   "description": "MCP server giving AI agents fast full-text search and section-level retrieval over the HackTricks security wiki and its Cloud book (AWS, Azure, GCP, Kubernetes, CI/CD), and a check of cloud permissions against the book's rated lists and escalation catalog. Ships with a pre-built index of both books, synced with upstream every 3 days and refreshed in the background.",
   "type": "module",
@@ -28,7 +28,6 @@
     "sync:skills": "node scripts/sync-skills.mjs",
     "sync:agents": "node scripts/sync-agents.mjs",
     "version": "node scripts/version-sync.mjs && node scripts/sync-skills.mjs && node scripts/sync-agents.mjs && git add server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .codex-plugin/plugin.json .zcode-plugin/plugin.json kimi-plugin/skills kimi-plugin/agents .codex/agents",
-    "eval:permissions": "tsx scripts/eval-permissions.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
