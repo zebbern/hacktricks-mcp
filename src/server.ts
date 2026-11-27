@@ -11,8 +11,8 @@ import { z } from "zod";
 import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
-import { openDbReadonly, searchPages, getPage, listCategories } from "./db.js";
-import { extractOutline, extractSection, extractCodeBlocks } from "./markdown.js";
+import { openDbReadonly, searchPages, getPage, listCategories, type PageRow } from "./db.js";
+import { extractOutline, extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DB_PATH = process.env.HACKTRICKS_DB ?? path.join(PKG_ROOT, "data", "hacktricks.db");
@@ -49,12 +49,49 @@ const READONLY = {
   openWorldHint: false,
 } as const;
 
+/**
+ * A page's headings with the size of each section and none of the content.
+ * Agents read whole pages just to find the headings, then read sections of the
+ * same pages again; this makes the first step cheap.
+ */
+function pageOutline(page: PageRow, headings: Heading[]) {
+  const size = (n: number) => n.toLocaleString("en-US");
+  const sizes = sectionLengths(page.content, headings);
+  const outline = headings.map((h, i) => {
+    // A heading whose section is mostly its subsections is a container. Asking
+    // for it returns all of them, so say that instead of a bare size.
+    let subsections = 0;
+    for (const next of headings.slice(i + 1)) {
+      if (next.level <= h.level) break;
+      if (next.level === h.level + 1) subsections++;
+    }
+    const extent = subsections > 0 ? `${size(sizes[i])} chars in ${subsections} subsections` : `${size(sizes[i])} chars`;
+    return `${"  ".repeat(h.level - 1)}${h.text} (${extent})`;
+  });
+  const summary =
+    headings.length === 0
+      ? `Page is ${size(page.content.length)} chars and has no headings, so read it without section.`
+      : `Page is ${size(page.content.length)} chars in ${headings.length} sections. Read one with section=<heading>, adding codeOnly=true for its commands only.`;
+  return {
+    content: [{ type: "text" as const, text: `# ${page.title}\n${page.url}\n\n${summary}\n\n${outline.join("\n")}` }],
+    structuredContent: {
+      title: page.title,
+      path: page.path,
+      url: page.url,
+      outline,
+      content: "",
+      truncated: false,
+    },
+  };
+}
+
 const searchHitSchema = {
   pageId: z.number(),
   path: z.string().describe("Page identifier; pass this to hacktricks_get_page"),
   title: z.string(),
   category: z.string(),
   url: z.string(),
+  chars: z.number().describe("Length of the page in characters. Under about 8,000 is cheap to read whole; above that, read the outline first."),
   snippet: z.string(),
 };
 
@@ -65,7 +102,7 @@ server.registerTool(
     description:
       "Full-text search over the HackTricks offensive-security wiki (pentesting techniques, " +
       "privilege escalation, web vulns, AD attacks, forensics). Returns ranked pages " +
-      "with snippets. Use technical terms or the question in plain words (e.g. 'kerberoast' or " +
+      "with snippets and each page's size. Use technical terms or the question in plain words (e.g. 'kerberoast' or " +
       "'how do I abuse unconstrained delegation'); the page named after the technique is ranked first. " +
       "Follow up with hacktricks_get_page on a result's path to read the content.",
     inputSchema: {
@@ -87,6 +124,7 @@ server.registerTool(
       title: h.title,
       category: h.category,
       url: h.url,
+      chars: h.chars,
       snippet: h.snippet.replace(/\n+/g, " ").trim(),
     }));
     const text =
@@ -95,7 +133,7 @@ server.registerTool(
         : results
             .map(
               (r, i) =>
-                `${i + 1}. ${r.title}\n   path: ${r.path}\n   category: ${r.category}\n   ${r.snippet}`,
+                `${i + 1}. ${r.title}\n   path: ${r.path}\n   category: ${r.category}\n   size: ${r.chars.toLocaleString("en-US")} chars\n   ${r.snippet}`,
             )
             .join("\n\n");
     return { content: [{ type: "text", text }], structuredContent: { results } };
@@ -107,15 +145,19 @@ server.registerTool(
   {
     title: "Read HackTricks Page",
     description:
-      "Retrieve content of a HackTricks page found via hacktricks_search. By default returns the " +
-      "page outline plus content (truncated if very long). Use section= to read one section by " +
-      "heading name, or codeOnly=true to get just the commands/payloads. This is the token-efficient " +
-      "way to consume long pages.",
+      "Retrieve content of a HackTricks page found via hacktricks_search. For a long page, start with " +
+      "outlineOnly=true to list its sections with their sizes, then use section= to read one section by " +
+      "heading name, or codeOnly=true to get just the commands/payloads. A short page (the search " +
+      "result shows its size) can be read whole; long ones are truncated at 20,000 characters.",
     inputSchema: {
       path: z
         .string()
         .min(1)
         .describe("Page path from hacktricks_search (e.g. 'windows-hardening/active-directory-methodology/kerberoast.md'). Unique suffixes like 'kerberoast' also work."),
+      outlineOnly: z
+        .boolean()
+        .default(false)
+        .describe("If true, return the headings with the size of each section instead of the content. Use it to choose a section before reading."),
       section: z
         .string()
         .optional()
@@ -135,7 +177,7 @@ server.registerTool(
     },
     annotations: READONLY,
   },
-  async ({ path: pagePath, section, codeOnly }) => {
+  async ({ path: pagePath, outlineOnly, section, codeOnly }) => {
     const page = getPage(db, pagePath);
     if (!page) {
       return {
@@ -149,9 +191,9 @@ server.registerTool(
       };
     }
 
-    const outline = (JSON.parse(page.outline) as { level: number; text: string }[]).map(
-      (h) => `${"  ".repeat(h.level - 1)}${h.text}`,
-    );
+    const headings = JSON.parse(page.outline) as Heading[];
+    if (outlineOnly) return pageOutline(page, headings);
+    const outline = headings.map((h) => `${"  ".repeat(h.level - 1)}${h.text}`);
 
     let content: string;
     if (section) {

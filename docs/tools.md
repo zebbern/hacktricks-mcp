@@ -30,7 +30,7 @@ Measured on `tests/scenarios.json` (see [development.md](development.md#evaluati
 
 The following expand automatically at query time: `privesc`, `sqli`, `rce`, `lfi`, `rfi`, `xss`, `csrf`, `ssrf`, `ssti`, `xxe`, `idor`, `lpe`, `revshell`. The list lives in `src/db.ts` (`ALIASES`).
 
-**Returns** (structured): `results[]` with `pageId`, `path`, `title`, `category`, `url`, `snippet`. Pass `path` to `hacktricks_get_page`.
+**Returns** (structured): `results[]` with `pageId`, `path`, `title`, `category`, `url`, `chars`, `snippet`. `chars` is the page's length: under about 8,000 is cheap to read whole, above that read the outline first. Pass `path` to `hacktricks_get_page`.
 
 ## hacktricks_get_page
 
@@ -41,11 +41,13 @@ Reads one page from the index.
 | Name | Type | Default | Description |
 |---|---|---|---|
 | `path` | string | required | Page path from search, e.g. `windows-hardening/active-directory-methodology/kerberoast.md`. Unique suffixes like `kerberoast` also work. |
+| `outlineOnly` | boolean | false | Return the headings with the size of each section and no content. Use it to choose a section before reading. Takes precedence over `section` and `codeOnly`. |
 | `section` | string | none | Extract one section by heading text (case-insensitive substring match) |
 | `codeOnly` | boolean | false | Return only fenced code blocks (commands and payloads) |
 
 **Behavior**
 
+- `outlineOnly` is the cheap first read for a long page: about 700 characters for the median page and under 1,600 for nine pages in ten, against a median page of about 11,000. Each heading carries the length of its section, cut the way `section` cuts it, and a heading whose section is mostly subsections says so (`24,716 chars in 19 subsections`).
 - Without `section`, returns the full cleaned page. Pages over 20,000 chars are truncated and the heading outline is appended so the caller can pick a section.
 - Unknown `section` returns an error listing the available headings, so the agent can self-correct.
 - Content is pre-cleaned at index time: GitBook hint banners, include directives and badge images are removed.
@@ -69,7 +71,7 @@ Without `category` the outline is large, about 90,000 characters. With it, only 
 ## Recommended agent workflow
 
 1. `hacktricks_search` with the question as typed, or with the technical terms.
-2. `hacktricks_get_page` with `section` or `codeOnly` on the best hit.
-3. Only read full pages when a section is not enough.
+2. `hacktricks_get_page` with `outlineOnly` on the best hit, then with `section` or `codeOnly` on the part that answers.
+3. Only read full pages when the outline is not enough.
 
 This pattern keeps typical lookups under 1,000 tokens of context.

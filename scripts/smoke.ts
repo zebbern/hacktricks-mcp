@@ -37,6 +37,10 @@ async function main() {
   if (!searchText.toLowerCase().includes("kerberoast")) {
     throw new Error(`Unexpected search result: ${searchText.slice(0, 200)}`);
   }
+  const firstHit = (search as any).structuredContent.results[0];
+  if (!(firstHit.chars > 0) || !/size: [\d,]+ chars/.test(searchText)) {
+    throw new Error("search hits do not show the page size");
+  }
   console.log("search OK");
 
   const page = await client.callTool({
@@ -45,6 +49,26 @@ async function main() {
   });
   if ((page as any).isError) throw new Error("get_page returned error");
   console.log("get_page OK");
+
+  const whole = await client.callTool({
+    name: "hacktricks_get_page",
+    arguments: { path: "windows-hardening/active-directory-methodology/kerberoast.md" },
+  });
+  const outline = await client.callTool({
+    name: "hacktricks_get_page",
+    arguments: { path: "kerberoast", outlineOnly: true },
+  });
+  const outlineText = (outline.content as any[])[0]?.text ?? "";
+  const wholeText = (whole.content as any[])[0]?.text ?? "";
+  if (
+    (outline as any).isError ||
+    (outline as any).structuredContent.content !== "" ||
+    !/\(\d[\d,]* chars\)/.test(outlineText) ||
+    outlineText.length * 5 > wholeText.length
+  ) {
+    throw new Error("outlineOnly did not return a sized outline that is far smaller than the page");
+  }
+  console.log("get_page outlineOnly OK");
 
   const toc = await client.callTool({ name: "hacktricks_get_toc", arguments: {} });
   const tocText = (toc.content as any[])[0]?.text ?? "";

@@ -22,6 +22,7 @@ export interface SearchHit {
   title: string;
   category: string;
   url: string;
+  chars: number; // page length, so a caller can choose between a whole read and the outline
   snippet: string;
 }
 
@@ -271,7 +272,7 @@ export function searchPages(
   // topic.
   const candidates = (expr: string, alsoByCredit = false): Candidate[] => {
     const select = (order: string) => `
-      SELECT p.page_id, p.path, p.title, p.category, p.url,
+      SELECT p.page_id, p.path, p.title, p.category, p.url, length(p.content) AS chars,
              bm25(pages_fts, 10.0, 8.0, 5.0, 1.0) AS relevance, ${creditSql.join(", ")}
       FROM pages_fts JOIN pages p ON p.page_id = pages_fts.rowid
       WHERE pages_fts MATCH ?
@@ -288,6 +289,7 @@ export function searchPages(
       title: String(row.title),
       category: String(row.category),
       url: String(row.url),
+      chars: Number(row.chars),
       relevance: Number(row.relevance),
       boost: creditOf(row),
     });

@@ -75,6 +75,19 @@ export function extractSection(content: string, section: string): string | null 
   return lines.slice(match.line, end).join("\n").trim();
 }
 
+/**
+ * Length in characters of each heading's section, cut the way extractSection
+ * cuts it: from the heading to the next one of the same or higher level. Lets
+ * a caller pick a section before reading any of the page.
+ */
+export function sectionLengths(content: string, outline: Heading[]): number[] {
+  const lines = content.split("\n");
+  return outline.map((h, i) => {
+    const next = outline.slice(i + 1).find((n) => n.level <= h.level);
+    return lines.slice(h.line, next?.line ?? lines.length).join("\n").length;
+  });
+}
+
 /** Extract only fenced code blocks (commands/payloads) from a document. */
 export function extractCodeBlocks(content: string): string[] {
   const blocks: string[] = [];

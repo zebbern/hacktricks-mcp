@@ -33,12 +33,18 @@ codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp@latest
 }
 ```
 
-**As a plugin** (bundles the agent skill that teaches efficient use). The repository is its own marketplace:
+**As a plugin** (bundles the agent skill that teaches efficient use and a researcher subagent that keeps multi-page research out of the main agent's context). The repository is its own marketplace:
 
 - Claude Code: `/plugin install hacktricks --marketplace zebbern/hacktricks-mcp`
 - Codex CLI: `codex plugin marketplace add zebbern/hacktricks-mcp`, then `codex plugin add hacktricks --marketplace hacktricks-mcp`
 - ZCode: add `zebbern/hacktricks-mcp` as a plugin marketplace, then install `hacktricks`
 - Kimi Work: use [this plugin link](kimi-work://plugin?id=hacktricks)
+
+The researcher subagent comes with the plugin on Claude Code, ZCode and Kimi. Codex plugins cannot bundle subagents, so on Codex copy its definition once:
+
+```bash
+mkdir -p ~/.codex/agents && curl -fsSLo ~/.codex/agents/hacktricks-researcher.toml https://raw.githubusercontent.com/zebbern/hacktricks-mcp/main/.codex/agents/hacktricks-researcher.toml
+```
 
 Packaging details live in [docs/agents.md](docs/agents.md).
 
@@ -53,7 +59,7 @@ Then ask things like:
 | Tool | What it does |
 |---|---|
 | `hacktricks_search` | Ranked full-text search that takes a plain question or technical terms, with snippets, abbreviation handling (`privesc`, `sqli`, `rce`, ...) and an optional platform filter |
-| `hacktricks_get_page` | Read a page, a single section, or just its code blocks |
+| `hacktricks_get_page` | Read a page's section list with sizes, a single section, the whole page, or just its code blocks |
 | `hacktricks_get_toc` | The wiki category tree, so agents can see where topics live |
 
 All tools are strictly read-only. Full reference: [docs/tools.md](docs/tools.md).

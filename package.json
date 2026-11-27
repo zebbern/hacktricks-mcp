@@ -24,7 +24,8 @@
     "eval:strategies": "tsx scripts/eval-strategies.ts",
     "smoke": "tsx scripts/smoke.ts",
     "sync:skills": "node scripts/sync-skills.mjs",
-    "version": "node scripts/version-sync.mjs && node scripts/sync-skills.mjs && git add server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .codex-plugin/plugin.json .zcode-plugin/plugin.json kimi-plugin/skills",
+    "sync:agents": "node scripts/sync-agents.mjs",
+    "version": "node scripts/version-sync.mjs && node scripts/sync-skills.mjs && node scripts/sync-agents.mjs && git add server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .codex-plugin/plugin.json .zcode-plugin/plugin.json kimi-plugin/skills kimi-plugin/agents .codex/agents",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
