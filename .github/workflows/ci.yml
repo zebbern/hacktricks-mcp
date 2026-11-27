@@ -32,3 +32,7 @@ jobs:
 
       - name: Smoke-test MCP server over stdio
         run: npm run smoke
+
+      # A report, not a gate: which query styles find the right page on this index.
+      - name: Search strategy report
+        run: npm run eval:strategies

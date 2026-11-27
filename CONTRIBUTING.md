@@ -28,6 +28,8 @@ Exception: `kimi-plugin/kimi.plugin.json` is versioned by the Kimi marketplace t
 
 Any change to `src/db.ts` (ranking, aliases) or `src/markdown.ts` (cleaning) must keep `npm run eval` at 30/30. If a legitimate ranking change breaks a fixture, discuss in the PR whether the fixture or the ranking is wrong, then update `tests/queries.json` deliberately, never to just make CI green.
 
+Run `npm run eval:strategies` before and after a ranking change and compare. What the skill tells agents about querying and the reference numbers in `docs/development.md` rest on that report, so update both when the results move; do not change search guidance on assumption.
+
 ### 5. Docs are DRY
 
 Each topic has exactly one home: tool API in `docs/tools.md`, pipeline in `docs/architecture.md`, dev/release flow in `docs/development.md`, ecosystem packaging in `docs/agents.md`. The README links out instead of repeating details. No em-dashes in any markdown (project style).

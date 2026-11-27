@@ -21,6 +21,7 @@
     "start": "node dist/server.js",
     "sync": "tsx scripts/sync.ts",
     "eval": "tsx scripts/eval.ts",
+    "eval:strategies": "tsx scripts/eval-strategies.ts",
     "smoke": "tsx scripts/smoke.ts",
     "sync:skills": "node scripts/sync-skills.mjs",
     "version": "node scripts/version-sync.mjs && node scripts/sync-skills.mjs && git add server.json .claude-plugin/plugin.json .claude-plugin/marketplace.json .codex-plugin/plugin.json .zcode-plugin/plugin.json kimi-plugin/skills",

@@ -83,6 +83,8 @@ Because the SHA check happens first, quiet weeks produce zero commits, zero rele
 
 `scripts/eval.ts` runs `tests/queries.json` (30 real lookup queries with expected page paths) against the built index. A query passes when an expected page appears in the top 5. The job fails below 80%, so a broken parser or ranking regression blocks a bad index from being committed.
 
+A second eval is a report rather than a gate: `scripts/eval-strategies.ts` measures which query styles find the right page across `tests/scenarios.json`. See [development.md](development.md#evaluating-search-quality).
+
 ## Design choices and why
 
 - **Pre-built index over live fetching**: sub-100ms answers, works offline, never hits GitHub rate limits at query time.

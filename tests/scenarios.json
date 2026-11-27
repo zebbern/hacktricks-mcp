@@ -1,0 +1,485 @@
+[
+  {
+    "id": "kerberoast",
+    "area": "windows",
+    "expect": ["kerberoast.md"],
+    "named": "How do I kerberoast a service account and crack its password?",
+    "goal": "I'm a normal domain user. How can I request a service ticket for an SPN owned by a user account and crack it offline?"
+  },
+  {
+    "id": "asreproast",
+    "area": "windows",
+    "expect": ["asreproast.md"],
+    "named": "What is ASREPRoast and how do I find accounts that don't require pre-authentication?",
+    "goal": "How can I request an authentication reply for accounts that don't need Kerberos pre-authentication and crack their password offline?"
+  },
+  {
+    "id": "dcsync",
+    "area": "windows",
+    "expect": ["dcsync.md"],
+    "named": "How do I dump the krbtgt hash with DCSync using impacket?",
+    "goal": "How can I replicate the password hashes of a domain controller, like the krbtgt one, without logging into it, by abusing directory replication?"
+  },
+  {
+    "id": "unconstrained-delegation",
+    "area": "windows",
+    "expect": ["unconstrained-delegation.md"],
+    "named": "How do I abuse unconstrained delegation?",
+    "goal": "I compromised a server whose computer account is trusted for delegation. How can I capture a privileged user's TGT when they authenticate to me?"
+  },
+  {
+    "id": "golden-ticket",
+    "area": "windows",
+    "expect": ["golden-ticket.md"],
+    "named": "How do I forge a golden ticket with the krbtgt hash?",
+    "goal": "I have the hash of the Kerberos service account that signs all tickets. How can I mint a TGT for the domain administrator?"
+  },
+  {
+    "id": "shadow-credentials",
+    "area": "windows",
+    "expect": ["shadow-credentials.md"],
+    "named": "How do Shadow Credentials work and how do I abuse them with certipy?",
+    "goal": "How can I add my own key pair to a computer or user object, authenticate as it, and get its NT hash?"
+  },
+  {
+    "id": "laps",
+    "area": "windows",
+    "expect": ["active-directory-methodology/laps.md"],
+    "named": "How do I read LAPS passwords?",
+    "goal": "The domain stores the local admin password of each machine in an attribute. How can I read the plaintext password for a computer's built-in Administrator?"
+  },
+  {
+    "id": "printnightmare",
+    "area": "windows",
+    "expect": ["printnightmare.md"],
+    "named": "How do I exploit PrintNightmare to get SYSTEM?",
+    "goal": "The spooler service is running on a Windows box and I can add a printer driver. How can I load a malicious DLL and get code execution as SYSTEM?"
+  },
+  {
+    "id": "adcs-esc",
+    "area": "windows",
+    "expect": ["ad-certificates/domain-escalation.md", "ad-certificates.md"],
+    "named": "What ADCS misconfigurations can I abuse with Certipy to escalate to domain admin?",
+    "goal": "The domain runs a certificate authority. How can I request a certificate that lets me authenticate as the domain admin?"
+  },
+  {
+    "id": "uac",
+    "area": "windows",
+    "expect": ["uac-user-account-control.md"],
+    "named": "How do I bypass UAC on a Windows 10 machine?",
+    "goal": "I have local admin but an unprivileged shell. How can I get a full administrator token past the consent prompt?"
+  },
+  {
+    "id": "mimikatz-lsass",
+    "area": "windows",
+    "expect": ["credentials-mimikatz.md", "stealing-credentials/README.md"],
+    "named": "How do I use mimikatz to dump LSASS credentials?",
+    "goal": "How can I extract plaintext passwords and hashes from the memory of the process that holds cached logon secrets?"
+  },
+  {
+    "id": "psexec-lateral",
+    "area": "windows",
+    "expect": ["psexec-and-winexec.md"],
+    "named": "How do I move laterally with PsExec or SMBExec?",
+    "goal": "I have local admin credentials on another Windows host over SMB. How can I upload a service binary and execute it remotely?"
+  },
+  {
+    "id": "dpapi",
+    "area": "windows",
+    "expect": ["dpapi-extracting-passwords.md"],
+    "named": "How do I decrypt DPAPI blobs and dump saved credentials with mimikatz?",
+    "goal": "I have a user's master keys from an LSASS dump. How can I use them to decrypt the passwords Chrome and Credential Manager saved for that user?"
+  },
+  {
+    "id": "potato-seimpersonate",
+    "area": "windows",
+    "expect": ["juicypotato.md", "roguepotato-and-printspoofer.md", "seimpersonate-from-high-to-system.md"],
+    "named": "I have SeImpersonatePrivilege, how do I use JuicyPotato or PrintSpoofer to become SYSTEM?",
+    "goal": "I'm running as a service account with a token that lets me impersonate clients. How can I escalate to SYSTEM with a potato exploit?"
+  },
+  {
+    "id": "lxd",
+    "area": "linux",
+    "expect": ["lxd-privilege-escalation.md"],
+    "named": "How do I escalate privileges from the lxd group?",
+    "goal": "My user can talk to the LXD daemon and I'm in its group. How can I start a container that mounts the host filesystem and read /etc/shadow?"
+  },
+  {
+    "id": "sudo",
+    "area": "linux",
+    "expect": ["sudo-command-abuse.md", "linux-basics/linux-privilege-escalation/README.md"],
+    "named": "Which sudo versions are vulnerable and how do I exploit a misconfigured sudoers?",
+    "goal": "The target has an old sudo binary. How can I find out whether its version has a known heap overflow I can exploit?"
+  },
+  {
+    "id": "capabilities",
+    "area": "linux",
+    "expect": ["linux-capabilities.md"],
+    "named": "How do I abuse Linux capabilities like cap_setuid for privilege escalation?",
+    "goal": "I found a binary with the setuid capability bit set on its file. How can I use getcap to find such binaries and spawn a root shell?"
+  },
+  {
+    "id": "cron",
+    "area": "linux",
+    "expect": ["cron-and-systemd-timers.md"],
+    "named": "How do I find misconfigured cron jobs and systemd timers for privilege escalation?",
+    "goal": "A root-owned scheduled task runs a script inside a folder my user can write to. How can I enumerate such scheduled tasks and hijack them?"
+  },
+  {
+    "id": "containerd-ctr",
+    "area": "linux",
+    "expect": ["containerd-ctr-privilege-escalation.md"],
+    "named": "How do I escape to the host by abusing containerd's ctr tool?",
+    "goal": "I'm root inside a container and can reach the container runtime's socket on the host. How can I run a privileged image that mounts the host root?"
+  },
+  {
+    "id": "nfs-root-squash",
+    "area": "linux",
+    "expect": ["nfs-no_root_squash-misconfiguration-pe.md"],
+    "named": "How do I exploit an NFS export with no_root_squash?",
+    "goal": "A shared folder exported by the target keeps my file's owner as root when I write as root. How can I use that to plant an SUID binary?"
+  },
+  {
+    "id": "wildcards",
+    "area": "linux",
+    "expect": ["wildcards-spare-tricks.md"],
+    "named": "How do I abuse wildcards in cron jobs or scripts for privilege escalation?",
+    "goal": "A root script runs tar with a star on a folder I can write to. How can I get it to load my own options or files?"
+  },
+  {
+    "id": "restricted-shell",
+    "area": "linux",
+    "expect": ["escaping-from-limited-bash.md"],
+    "named": "How do I escape from a restricted or limited bash shell?",
+    "goal": "I landed in a shell that blocks commands like cd and slash characters. How can I break out of it?"
+  },
+  {
+    "id": "runc",
+    "area": "linux",
+    "expect": ["runc-privilege-escalation.md"],
+    "named": "How do I escape a Docker container by exploiting runc (CVE-2019-5736)?",
+    "goal": "I'm inside an old container runtime. How can I overwrite the host's runtime binary and get code execution on the host when a new container starts?"
+  },
+  {
+    "id": "ld-so-conf",
+    "area": "linux",
+    "expect": ["suid-shared-library-and-linker-abuse.md", "ld.so.conf-example.md"],
+    "named": "How do I abuse a writable ld.so.conf for privilege escalation?",
+    "goal": "I can edit the file that lists extra library directories. How can I plant a library that a privileged binary will load?"
+  },
+  {
+    "id": "ssti",
+    "area": "web",
+    "expect": ["ssti-server-side-template-injection/README.md"],
+    "named": "How do I detect and exploit SSTI in Jinja2?",
+    "goal": "The app reflects text that looks like it goes through a template engine. How can I confirm it and run Python code on the server?"
+  },
+  {
+    "id": "blind-sqli",
+    "area": "web",
+    "expect": ["sql-injection/README.md"],
+    "named": "How do I exploit a blind SQL injection with sqlmap?",
+    "goal": "A parameter changes the page depending on whether a SQL condition is true. How can I extract data when the output isn't printed?"
+  },
+  {
+    "id": "ssrf-metadata",
+    "area": "web",
+    "expect": ["ssrf-server-side-request-forgery/cloud-ssrf.md", "ssrf-server-side-request-forgery/README.md"],
+    "named": "How do I exploit SSRF to reach the cloud metadata endpoint?",
+    "goal": "The server fetches a URL I supply. How can I make it request internal services like 169.254.169.254?"
+  },
+  {
+    "id": "jwt",
+    "area": "web",
+    "expect": ["hacking-jwt-json-web-tokens.md"],
+    "named": "How do I attack a JWT with algorithm confusion or the none algorithm?",
+    "goal": "The app hands me a signed token with three dot separated parts. How can I tamper with its claims or forge the signature?"
+  },
+  {
+    "id": "xss-csp",
+    "area": "web",
+    "expect": ["xss-cross-site-scripting/README.md", "content-security-policy-csp-bypass/README.md"],
+    "named": "How do I bypass CSP to steal cookies with XSS?",
+    "goal": "I can inject a script tag into the page but the browser blocks inline code by policy. How can I get around it to hijack the session?"
+  },
+  {
+    "id": "java-deserialization",
+    "area": "web",
+    "expect": ["deserialization/README.md", "jndi-java-naming-and-directory-interface-and-log4shell.md"],
+    "named": "How do I exploit insecure deserialization in Java with ysoserial?",
+    "goal": "The app base64 decodes a cookie into a serialized object. How can I turn that into code execution with a gadget chain?"
+  },
+  {
+    "id": "file-upload",
+    "area": "web",
+    "expect": ["file-upload/README.md"],
+    "named": "How do I bypass file upload filters to get a webshell?",
+    "goal": "The site only lets me upload images. How can I smuggle a PHP file past the extension and content-type checks?"
+  },
+  {
+    "id": "csrf",
+    "area": "web",
+    "expect": ["csrf-cross-site-request-forgery.md"],
+    "named": "How do I exploit CSRF when there is no token?",
+    "goal": "The state changing endpoint relies only on the session cookie. How can I make a logged in victim submit the request from my site?"
+  },
+  {
+    "id": "403-bypass",
+    "area": "web",
+    "expect": ["403-and-401-bypasses.md"],
+    "named": "How do I bypass 403 with HTTP header tricks?",
+    "goal": "The admin path returns forbidden. How can I use path normalization or headers like X-Original-URL to reach it?"
+  },
+  {
+    "id": "saml",
+    "area": "web",
+    "expect": ["saml-attacks/README.md"],
+    "named": "How do I attack SAML with XML signature wrapping?",
+    "goal": "The app logs in with an XML assertion. How can I tamper with it or fake the signature to become another user?"
+  },
+  {
+    "id": "cache-deception",
+    "area": "web",
+    "expect": ["cache-deception/README.md"],
+    "named": "What is web cache deception and how do I exploit it?",
+    "goal": "How can I make the cache store a page with the victim's personal data so I can read it later?"
+  },
+  {
+    "id": "cors",
+    "area": "web",
+    "expect": ["cors-bypass.md"],
+    "named": "How do I exploit a misconfigured CORS policy?",
+    "goal": "The API reflects my Origin and allows credentials. How can I read another user's data from a malicious site?"
+  },
+  {
+    "id": "prototype-pollution",
+    "area": "web",
+    "expect": ["nodejs-proto-prototype-pollution/README.md"],
+    "named": "How do I exploit prototype pollution in Node.js?",
+    "goal": "The app merges my JSON into an object recursively. How can I inject a property on the global object to reach RCE?"
+  },
+  {
+    "id": "squid",
+    "area": "network",
+    "expect": ["3128-pentesting-squid.md"],
+    "named": "How do I pentest a Squid proxy on port 3128?",
+    "goal": "Port 3128 answers with a proxy error page. How can I enumerate internal hosts through it?"
+  },
+  {
+    "id": "docker-api",
+    "area": "network",
+    "expect": ["2375-pentesting-docker.md"],
+    "named": "How do I abuse an exposed Docker API on port 2375?",
+    "goal": "The container engine's REST endpoint is reachable without auth on the host. How can I list images and start a privileged container?"
+  },
+  {
+    "id": "mongodb",
+    "area": "network",
+    "expect": ["27017-27018-mongodb.md"],
+    "named": "How do I pentest an open MongoDB on 27017?",
+    "goal": "A document database port is open without credentials. How can I enumerate databases and dump collections?"
+  },
+  {
+    "id": "mqtt",
+    "area": "network",
+    "expect": ["1883-pentesting-mqtt-mosquitto.md"],
+    "named": "How do I pentest MQTT?",
+    "goal": "An IoT broker listens on 1883. How can I subscribe to every topic and publish commands?"
+  },
+  {
+    "id": "iscsi",
+    "area": "network",
+    "expect": ["3260-pentesting-iscsi.md"],
+    "named": "How do I abuse an exposed iSCSI target?",
+    "goal": "Port 3260 exposes block storage. How can I log in without auth and mount the target's disk?"
+  },
+  {
+    "id": "netbios",
+    "area": "network",
+    "expect": ["137-138-139-pentesting-netbios.md"],
+    "named": "How do I enumerate NetBIOS names on port 137?",
+    "goal": "UDP 137 is open on a Windows host. How can I list its name, workgroup and logged on users?"
+  },
+  {
+    "id": "kerberos-88",
+    "area": "network",
+    "expect": ["pentesting-kerberos-88/README.md", "harvesting-tickets-from-linux.md"],
+    "named": "How do I enumerate Kerberos users on port 88?",
+    "goal": "The domain controller exposes the Kerberos port. How can I find valid usernames with AS-REQ requests without a domain account?"
+  },
+  {
+    "id": "llmnr",
+    "area": "network",
+    "expect": ["spoofing-llmnr-nbt-ns-mdns-dns-and-wpad-and-relay-attacks.md"],
+    "named": "How do I poison LLMNR and NBT-NS with Responder?",
+    "goal": "Windows hosts resolve names by shouting on the local network. How can I answer those name lookups and capture their hashes?"
+  },
+  {
+    "id": "keychain",
+    "area": "macos",
+    "expect": ["macos-keychain.md"],
+    "named": "How do I dump the macOS keychain with security find-generic-password?",
+    "goal": "I'm on a Mac as the logged in user. How can I read the saved passwords from the system credential store?"
+  },
+  {
+    "id": "mac-autostart",
+    "area": "macos",
+    "expect": ["macos-auto-start-locations.md"],
+    "named": "Where are the macOS auto start locations like LaunchAgents and LaunchDaemons?",
+    "goal": "I need my payload to survive a reboot on a Mac. Which folders and plists can I drop it in to have it launched automatically?"
+  },
+  {
+    "id": "mac-pkg",
+    "area": "macos",
+    "expect": ["macos-installers-abuse.md"],
+    "named": "How do I abuse macOS installer packages (pkg) for privilege escalation?",
+    "goal": "A script runs the installer tool with my pkg file as root. How can I abuse pre and post install scripts to escalate?"
+  },
+  {
+    "id": "mac-firewall",
+    "area": "macos",
+    "expect": ["macos-bypassing-firewalls.md"],
+    "named": "How do I bypass the macOS firewall?",
+    "goal": "Outgoing connections are blocked by the built in Mac firewall. How can I reach the network from an allowed Apple-signed binary?"
+  },
+  {
+    "id": "frida-pinning",
+    "area": "mobile",
+    "expect": ["frida-tutorial/README.md", "android-anti-instrumentation-and-ssl-pinning-bypass.md"],
+    "named": "How do I use Frida to bypass SSL pinning on Android?",
+    "goal": "The Android app rejects my proxy's certificate. How can I hook the trust check at runtime with an instrumentation tool?"
+  },
+  {
+    "id": "adb",
+    "area": "mobile",
+    "expect": ["adb-commands.md"],
+    "named": "Which adb commands are useful for Android pentesting?",
+    "goal": "The phone exposes its debug bridge over USB. What commands can I use to pull the app's data or install an APK?"
+  },
+  {
+    "id": "apk-decompile",
+    "area": "mobile",
+    "expect": ["apk-decompilers.md"],
+    "named": "How do I decompile an APK with jadx or apktool?",
+    "goal": "I have the app's installation file. How can I get readable Java code and resources out of it?"
+  },
+  {
+    "id": "biometric-bypass",
+    "area": "mobile",
+    "expect": ["bypass-biometric-authentication-android.md"],
+    "named": "How do I bypass Android biometric authentication?",
+    "goal": "The app unlocks with a fingerprint. How can I patch or hook the check so it accepts any input?"
+  },
+  {
+    "id": "content-providers",
+    "area": "mobile",
+    "expect": ["exploiting-content-providers.md", "content-protocol.md"],
+    "named": "How do I exploit Android content providers with Drozer?",
+    "goal": "Some app components export a URI interface to other apps. How can I query and modify their data?"
+  },
+  {
+    "id": "evil-twin",
+    "area": "wifi",
+    "expect": ["evil-twin-rogue-ap-and-client-association-attacks.md"],
+    "named": "How do I set up an evil twin access point?",
+    "goal": "I want devices to connect to my laptop instead of the real network. How can I spoof the SSID and deauthenticate clients?"
+  },
+  {
+    "id": "wpa2-crack",
+    "area": "wifi",
+    "expect": ["wpa2-personal-psk.md"],
+    "named": "How do I crack a WPA2 handshake?",
+    "goal": "I captured the 4-way exchange from a PSK network. How can I brute force the passphrase offline?"
+  },
+  {
+    "id": "pmf",
+    "area": "wifi",
+    "expect": ["protected-management-frames-pmf.md"],
+    "named": "What are protected management frames and how do they stop deauth attacks?",
+    "goal": "Deauthentication frames don't knock clients off the network. Which 802.11w feature causes that and how can it be attacked?"
+  },
+  {
+    "id": "eap",
+    "area": "wifi",
+    "expect": ["eap-methods.md"],
+    "named": "Which EAP methods are vulnerable and how do I attack them?",
+    "goal": "The corporate WiFi uses 802.1X with certificates. Which handshake types leak data or let me impersonate the server?"
+  },
+  {
+    "id": "wep",
+    "area": "wifi",
+    "expect": ["pentesting-wifi/wep.md"],
+    "named": "How do I crack WEP?",
+    "goal": "An old access point uses the wired equivalent privacy cipher. How can I recover the key from the traffic?"
+  },
+  {
+    "id": "wardriving",
+    "area": "wifi",
+    "expect": ["wifi-reconnaissance-and-wardriving.md"],
+    "named": "How do I do WiFi reconnaissance and wardriving?",
+    "goal": "How can I map nearby wireless networks while walking or driving around?"
+  },
+  {
+    "id": "tunneling",
+    "area": "methodology",
+    "expect": ["tunneling-and-port-forwarding.md"],
+    "named": "How do I do SSH tunneling and port forwarding?",
+    "goal": "I can SSH to a dual homed box. How can I forward a port from my machine to a service only it can reach?"
+  },
+  {
+    "id": "reverse-shell",
+    "area": "methodology",
+    "expect": ["reverse-shells/README.md", "reverse-shells/linux.md", "reverse-shells/windows.md"],
+    "named": "How do I get a reverse shell with bash or nc?",
+    "goal": "I have command execution but no interactive access. How can I make the target connect back to me and give me a prompt?"
+  },
+  {
+    "id": "vlan-hop",
+    "area": "methodology",
+    "expect": ["lateral-vlan-segmentation-bypass.md"],
+    "named": "How do I bypass VLAN segmentation with double tagging?",
+    "goal": "I'm on the guest VLAN. How can I send frames into other VLANs by adding a second tag to the packet?"
+  },
+  {
+    "id": "ids-evasion",
+    "area": "methodology",
+    "expect": ["ids-evasion.md"],
+    "named": "How do I evade an IDS with fragmentation and overlapping segments?",
+    "goal": "An inline sensor resets my scans. How can I split or overlap the packets so it can't reassemble the payload?"
+  },
+  {
+    "id": "format-string",
+    "area": "binary",
+    "expect": ["format-strings/README.md"],
+    "named": "How do I exploit a format string bug?",
+    "goal": "The program prints my input with printf directly. How can I use percent specifiers to leak memory and write to an address?"
+  },
+  {
+    "id": "stack-overflow",
+    "area": "binary",
+    "expect": ["basic-stack-binary-exploitation-methodology/README.md"],
+    "named": "What is the methodology for basic stack buffer overflow exploitation?",
+    "goal": "I can smash the saved return address on the stack. How do I turn that into code execution?"
+  },
+  {
+    "id": "relro",
+    "area": "binary",
+    "expect": ["common-binary-protections-and-bypasses/relro.md"],
+    "named": "What is RELRO and how does it protect the GOT?",
+    "goal": "The binary's global offset table is read only after startup. Which protection does that and what does it stop?"
+  },
+  {
+    "id": "nx",
+    "area": "binary",
+    "expect": ["common-binary-protections-and-bypasses/no-exec-nx.md"],
+    "named": "How do I bypass DEP or NX?",
+    "goal": "The stack is marked non executable. Why does my shellcode fail and what techniques work instead?"
+  },
+  {
+    "id": "got-overwrite",
+    "area": "binary",
+    "expect": ["arbitrary-write-2-exec/aw2exec-got-plt.md"],
+    "named": "How do I turn an arbitrary write into code execution by overwriting the GOT?",
+    "goal": "I can write any value anywhere in memory once. How can I overwrite a function pointer resolved lazily to redirect execution?"
+  }
+]

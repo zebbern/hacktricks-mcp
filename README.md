@@ -52,7 +52,7 @@ Then ask things like:
 
 | Tool | What it does |
 |---|---|
-| `hacktricks_search` | Ranked full-text search with snippets, category filter and abbreviation handling (`privesc`, `sqli`, `rce`, ...) |
+| `hacktricks_search` | Ranked full-text search that takes a plain question or technical terms, with snippets, abbreviation handling (`privesc`, `sqli`, `rce`, ...) and an optional platform filter |
 | `hacktricks_get_page` | Read a page, a single section, or just its code blocks |
 | `hacktricks_get_toc` | The wiki category tree, so agents can see where topics live |
 

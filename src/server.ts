@@ -62,15 +62,16 @@ server.registerTool(
     title: "Search HackTricks",
     description:
       "Full-text search over the HackTricks offensive-security wiki (pentesting techniques, " +
-      "privilege escalation, web vulns, AD attacks, cloud, forensics). Returns ranked pages " +
-      "with snippets. Use specific technical terms (e.g. 'kerberoast', 'SUID', 'JWT algorithm confusion') " +
-      "for best results. Follow up with hacktricks_get_page on a result's path to read the content.",
+      "privilege escalation, web vulns, AD attacks, forensics). Returns ranked pages " +
+      "with snippets. Use technical terms or the question in plain words (e.g. 'kerberoast' or " +
+      "'how do I abuse unconstrained delegation'); the page named after the technique is ranked first. " +
+      "Follow up with hacktricks_get_page on a result's path to read the content.",
     inputSchema: {
-      query: z.string().min(1).describe("Search terms, e.g. 'docker escape' or 'asreproast'"),
+      query: z.string().min(1).describe("Search terms or a plain question, e.g. 'docker escape' or 'how do I escalate from the lxd group'"),
       category: z
         .string()
         .optional()
-        .describe("Optional category filter (substring match), e.g. 'Windows Hardening' or 'Pentesting Web'"),
+        .describe("Optional: restrict to one platform when the top hits are for the wrong one (substring match), e.g. 'Linux' or 'Windows'"),
       limit: z.number().int().min(1).max(25).default(10).describe("Max results (default 10)"),
     },
     outputSchema: { results: z.array(z.object(searchHitSchema)) },
