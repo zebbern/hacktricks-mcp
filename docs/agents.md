@@ -1,12 +1,12 @@
 # Agents: skill, registry and plugin packaging
 
-How hacktricks-mcp shows up inside agent ecosystems. The artifacts referenced here live in `skills/` and `server.json`; this page explains the intent so there is one place to update the reasoning.
+How hacktricks-mcp shows up inside agent ecosystems. The artifacts referenced here live in `skills/`, the plugin manifests and `server.json`; this page explains the intent so there is one place to update the reasoning.
 
 ## Why a skill on top of an MCP server
 
 The MCP tools tell an agent *what* it can call. A skill tells the agent *how to be good at it*: which query phrasing works, when to use `section` versus `codeOnly`, how to recover from a miss. Skills are cheap (a markdown file) and measurably improve tool use quality.
 
-This repo ships `skills/hacktricks/SKILL.md` in the [Agent Skills](https://agentskills.io) format (YAML frontmatter plus instructions). The same file works in Claude Code, Kimi Work, Cursor and other hosts that support skills. It is documentation for agents, not executable code.
+This repo ships `skills/hacktricks/SKILL.md` in the [Agent Skills](https://agentskills.io) format (YAML frontmatter plus instructions). The same file is read by Claude Code, ZCode, Codex and Kimi Work, and by Cursor and other hosts that support skills. It is documentation for agents, not executable code.
 
 When editing tool behavior in `src/server.ts`, keep the skill in sync: the skill describes the workflow, [tools.md](tools.md) describes the API.
 
@@ -23,19 +23,28 @@ The registry verifies npm ownership via the `mcpName` field in `package.json`, a
 
 Index syncs publish a patch release on their own (see [architecture.md](architecture.md#sync-automation)), so the registry listing drifts until this command is re-run after each one. The Release workflow prints a reminder when it publishes.
 
-## Claude Code, Codex and Kimi plugin packaging
+## Plugin packaging: one plugin, four hosts
 
-This repo doubles as an installable plugin for three ecosystems:
+The repo root is the plugin. Each host gets a small manifest in its own dot-directory, and all of them point at the same `skills/` directory and the same `.mcp.json`, so there is one skill and one server definition to maintain:
 
-- `.claude-plugin/plugin.json` + `.mcp.json`: Claude Code plugin format
-- `.codex-plugin/plugin.json` + `mcp.json`: Codex plugin format
-- `kimi-plugin/`: Kimi Work plugin, registered into the personal marketplace from that directory
+| Host | Manifest | Skill | MCP server |
+|---|---|---|---|
+| Claude Code | `.claude-plugin/plugin.json` | auto-discovers `skills/` at the plugin root | auto-discovers `.mcp.json` at the plugin root |
+| ZCode | `.zcode-plugin/plugin.json` | `skills: "./skills"` | `mcpServers: "./.mcp.json"` |
+| Codex | `.codex-plugin/plugin.json` | `skills: "./skills/"` | `.mcp.json` (Codex compatibility layout); `mcp.json` is the portable [Agent Plugins](https://agent-plugins.org) form of the same server |
+| Kimi Work | `kimi-plugin/kimi.plugin.json` | mirrored to `kimi-plugin/skills/` | `mcpServers` inline |
+
+**One skill, one file.** The canonical skill is `skills/hacktricks/SKILL.md` in the [Agent Skills](https://agentskills.io) format. Claude Code, Codex and ZCode auto-discover `skills/` at the plugin root, so they read this file directly with no copy. Kimi plugins are installed as self-contained directories, so `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy: never edit it directly, run `npm run sync:skills` after changing the canonical file. CI fails on drift (`sync-skills.mjs --check`), and the `npm version` hook re-syncs automatically.
 
 **Always launch with an explicit tag.** Every MCP config here runs `npx -y @zebbern/hacktricks-mcp@latest`, and the README quick start does the same. Given a bare package name, npx prefers a package of the same name in the project it is started from, so a session opened inside this repository tries to run the local copy and fails with `'hacktricks-mcp' is not recognized`. The tag makes npx resolve the published package instead, and it still picks up each new release on launch.
 
-**One skill, one file.** The canonical skill is `skills/hacktricks/SKILL.md` in the [Agent Skills](https://agentskills.io) format. Claude Code and Codex auto-discover `skills/` at the plugin root, so they read this file directly with no copy. Kimi plugins are installed as self-contained directories, so `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy: never edit it directly, run `npm run sync:skills` after changing the canonical file. CI fails on drift (`sync-skills.mjs --check`), and the `npm version` hook re-syncs automatically.
+**The repo is its own marketplace.** `.claude-plugin/marketplace.json` lists the plugin with `"source": "./"`. Claude Code, ZCode and Codex all read that file, so one catalog serves every host:
 
-When bumping versions, the same hook stamps `server.json` and both plugin manifests. There is no extra code to maintain.
+- Claude Code: `/plugin install hacktricks --marketplace zebbern/hacktricks-mcp`
+- Codex CLI: `codex plugin marketplace add zebbern/hacktricks-mcp`, then `codex plugin add hacktricks --marketplace hacktricks-mcp`
+- ZCode: add `zebbern/hacktricks-mcp` as a plugin marketplace, then install `hacktricks`
+
+When bumping versions, the hook stamps `server.json`, the three plugin manifests and the marketplace entry. There is no extra code to maintain.
 
 ## Claude Desktop / Cursor / generic MCP
 

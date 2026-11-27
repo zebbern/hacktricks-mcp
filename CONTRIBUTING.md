@@ -14,7 +14,7 @@ Thanks for improving hacktricks-mcp. This project has a few structural invariant
 
 ### 2. Version consistency
 
-`npm version patch|minor|major` is the only way to bump versions. The lifecycle hook stamps `server.json` (including `packages[].version`), `.claude-plugin/plugin.json`, and `.codex-plugin/plugin.json` and stages them into the version commit. Never hand-edit version fields in those files.
+`npm version patch|minor|major` is the only way to bump versions. The lifecycle hook stamps `server.json` (including `packages[].version`), the three plugin manifests (`.claude-plugin/`, `.codex-plugin/`, `.zcode-plugin/`) and the plugin's entry in `.claude-plugin/marketplace.json`, and stages them into the version commit. Never hand-edit version fields in those files.
 
 Index-only releases use the same command: `sync.yml` runs `npm version patch` whenever the index changes, so an index change never needs a manual bump.
 

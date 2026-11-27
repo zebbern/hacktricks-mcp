@@ -1,6 +1,7 @@
 /**
  * Sync the package version into every manifest that carries its own copy:
- * server.json (MCP registry), .claude-plugin/plugin.json, .codex-plugin/plugin.json.
+ * server.json (MCP registry), the Claude Code, Codex and ZCode plugin
+ * manifests, and this plugin's entry in .claude-plugin/marketplace.json.
  *
  * Runs automatically via npm's "version" lifecycle script, so
  * `npm version patch` bumps everything atomically in one commit.
@@ -13,28 +14,42 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const version = JSON.parse(fs.readFileSync(path.join(ROOT, "package.json"), "utf8")).version;
+const read = (rel) => JSON.parse(fs.readFileSync(path.join(ROOT, rel), "utf8"));
+
+const version = read("package.json").version;
+// The marketplace may list other plugins, so only this plugin's entry is touched.
+const pluginName = fs.existsSync(path.join(ROOT, ".claude-plugin/plugin.json"))
+  ? read(".claude-plugin/plugin.json").name
+  : null;
 
 const targets = [
   "server.json",
   ".claude-plugin/plugin.json",
+  ".claude-plugin/marketplace.json",
   ".codex-plugin/plugin.json",
+  ".zcode-plugin/plugin.json",
 ];
+
+/** Objects in a manifest whose `version` must track the package. */
+function versioned(json) {
+  return [
+    ...(json.version === undefined ? [] : [json]),
+    ...(json.packages ?? []),
+    ...(json.plugins ?? []).filter((p) => p.name === pluginName && p.version !== undefined),
+  ];
+}
 
 let changed = 0;
 for (const rel of targets) {
-  const file = path.join(ROOT, rel);
-  if (!fs.existsSync(file)) {
+  if (!fs.existsSync(path.join(ROOT, rel))) {
     console.warn(`skip (missing): ${rel}`);
     continue;
   }
-  const json = JSON.parse(fs.readFileSync(file, "utf8"));
-  if (json.version === version && (json.packages ?? []).every((p) => p.version === version)) {
-    continue;
-  }
-  json.version = version;
-  for (const p of json.packages ?? []) p.version = version;
-  fs.writeFileSync(file, JSON.stringify(json, null, 2) + "\n");
+  const json = read(rel);
+  const slots = versioned(json);
+  if (slots.every((s) => s.version === version)) continue;
+  for (const slot of slots) slot.version = version;
+  fs.writeFileSync(path.join(ROOT, rel), JSON.stringify(json, null, 2) + "\n");
   console.log(`stamped ${rel} -> ${version}`);
   changed++;
 }

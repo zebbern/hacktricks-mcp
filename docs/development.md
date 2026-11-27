@@ -63,7 +63,9 @@ npm version patch   # or minor / major
 git push --follow-tags
 ```
 
-`npm version` automatically runs `scripts/version-sync.mjs` (npm lifecycle hook), which stamps the new version into `server.json` and both plugin manifests and stages them, so the version commit is always consistent. `kimi-plugin/kimi.plugin.json` is excluded on purpose: the Kimi marketplace manages its own numbering.
+`npm version` automatically runs `scripts/version-sync.mjs` (npm lifecycle hook), which stamps the new version into `server.json`, the three plugin manifests and the marketplace entry, and stages them, so the version commit is always consistent. `kimi-plugin/kimi.plugin.json` is excluded on purpose: the Kimi marketplace manages its own numbering.
+
+Index-only releases need no manual step: `sync.yml` runs the same two commands itself whenever the index changes (see [architecture.md](architecture.md#sync-automation)). Bump by hand only for code changes.
 
 The `release.yml` workflow then: rebuilds and quality-gates the index, creates the GitHub Release with the index assets, and publishes to npm via OIDC trusted publishing (no `NPM_TOKEN` anywhere). MCP registry publishing is intentionally local, see [agents.md](agents.md#mcp-registry).
 

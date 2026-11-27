@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-plugin-marketplace.json",
+  "name": "hacktricks-mcp",
+  "description": "HackTricks wiki lookup for AI agents: an offline search MCP server plus a skill that teaches efficient use.",
+  "owner": {
+    "name": "zebbern"
+  },
+  "plugins": [
+    {
+      "name": "hacktricks",
+      "source": "./",
+      "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki, synced every 3 days.",
+      "version": "0.1.5",
+      "category": "developer-tools"
+    }
+  ]
+}

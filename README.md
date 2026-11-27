@@ -33,7 +33,14 @@ codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp@latest
 }
 ```
 
-**As a plugin** (bundles the agent skill that teaches efficient usage): this repo is a valid plugin for Claude Code (`.claude-plugin/`), Codex (`.codex-plugin/`) and Kimi (`kimi-plugin/`). Add it from your client's plugin marketplace flow pointing at `zebbern/hacktricks-mcp`, or for Kimi Work use [this plugin link](kimi-work://plugin?id=hacktricks).
+**As a plugin** (bundles the agent skill that teaches efficient use). The repository is its own marketplace:
+
+- Claude Code: `/plugin install hacktricks --marketplace zebbern/hacktricks-mcp`
+- Codex CLI: `codex plugin marketplace add zebbern/hacktricks-mcp`, then `codex plugin add hacktricks --marketplace hacktricks-mcp`
+- ZCode: add `zebbern/hacktricks-mcp` as a plugin marketplace, then install `hacktricks`
+- Kimi Work: use [this plugin link](kimi-work://plugin?id=hacktricks)
+
+Packaging details live in [docs/agents.md](docs/agents.md).
 
 Then ask things like:
 
