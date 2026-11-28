@@ -167,10 +167,10 @@ The index itself is not kept in git: every install path resolves to the npm pack
 
 A release only reaches a user who installs it. Pinned versions, plugin installs and sessions that stay open for days would keep an older index until then. `src/refresh.ts` lets a running server pick up a newer one:
 
-1. **Startup.** The server opens the bundled index, or a newer one that an earlier run left in the cache. Tool calls answer from the first moment, online or not.
+1. **Startup.** The server opens the bundled index, or a newer one that an earlier run left in the cache. On Windows the bundled index is first copied into the cache and opened there: Windows does not let an open file be replaced, so a server holding the package's own `hacktricks.db` kept npx from updating the package (`npm error code EBUSY`) for as long as it ran. The copy has the name a download of the same index would have, so one stands for both. Tool calls answer from the first moment, online or not.
 2. **Check.** In the background it fetches `meta.json` from the project's latest GitHub release (`releases/latest/download/`, which redirects to the asset). If that index has the same `schema` and a later `syncedAt`, it downloads `meta.json`, `toc.json` and `hacktricks.db` into a staging folder in the cache.
 3. **Validate.** The download must have the advertised size and page count, the expected columns and a table of contents.
-4. **Swap.** Only then does the folder get its final name (`index-<schema>-<sync time as digits>`) and the index replace the one in use, between two tool calls. Older downloads are removed.
+4. **Swap.** Only then does the folder get its final name (`index-<schema>-<sync time as digits>`) and the index replace the one in use, between two tool calls. Indexes older than the one in use are removed, here and whenever a server starts.
 5. **Repeat.** The same check runs every 6 hours.
 
 Tool calls never wait on the network, and every failure leaves the current index in place:
@@ -182,15 +182,15 @@ Tool calls never wait on the network, and every failure leaves the current index
 | Release built for another index layout (`schema`) | Ignored without downloading |
 | Network accepts the connection and never answers | Given up after 5 s (check) or 10 min (download) |
 | Download cut short or not the advertised database | Rejected by validation; staging folder removed |
-| Process dies during a download | Its staging folder is removed by the next download that finds it over an hour old |
+| Process dies during a download or a copy | Its staging folder is removed by the next one that finds it over an hour old |
 
-The cache is `%LOCALAPPDATA%\hacktricks-mcp\cache` on Windows, `~/Library/Caches/hacktricks-mcp` on macOS and `$XDG_CACHE_HOME/hacktricks-mcp` (else `~/.cache/hacktricks-mcp`) elsewhere. A download is about 64 MB and happens at most once per release, because later sessions find it in the cache.
+The cache is `%LOCALAPPDATA%\hacktricks-mcp\cache` on Windows, `~/Library/Caches/hacktricks-mcp` on macOS and `$XDG_CACHE_HOME/hacktricks-mcp` (else `~/.cache/hacktricks-mcp`) elsewhere. A download is about 64 MB and happens at most once per release, because later sessions find it in the cache. On Windows the cache also holds the copy of the bundled index, one more folder of about 64 MB.
 
 | Variable | Effect |
 |---|---|
 | `HACKTRICKS_OFFLINE=1` | No network use at all; a cached index is still used |
 | `HACKTRICKS_INDEX_URL` | Base URL to fetch the three files from, instead of this project's releases |
-| `HACKTRICKS_CACHE_DIR` | Where downloaded indexes are kept |
+| `HACKTRICKS_CACHE_DIR` | Where downloaded indexes are kept and, on Windows, the copy of the bundled index |
 | `HACKTRICKS_DB` | Path of a database to serve; an explicit choice of index, so the refresh stays off |
 
 An empty or blank variable counts as unset, as a host's configuration form may leave it. The index is opened before the server answers its first message: one that is missing or not a database stops the start with one line on stderr that says which file and what to do. A damaged download in the cache is logged and skipped, and the bundled index is served.

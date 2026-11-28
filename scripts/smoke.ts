@@ -6,9 +6,11 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { scratchCache } from "./scratch-cache.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const text = (result: any) => (result.content as { text?: string }[]).map((c) => c.text ?? "").join("\n");
+const cache = scratchCache("smoke");
 
 async function main() {
   // The executable itself (package.json "bin"), which checks the Node.js
@@ -19,8 +21,9 @@ async function main() {
     stderr: "pipe",
     // Pass the full environment: the SDK's default filtered env drops vars
     // like ELECTRON_RUN_AS_NODE that some Node runtimes need. The background
-    // index refresh stays off so the test sees the bundled index.
-    env: { ...process.env, HACKTRICKS_OFFLINE: "1" } as Record<string, string>,
+    // index refresh stays off and the cache is a scratch folder, so the test
+    // sees the bundled index and nothing else.
+    env: { ...process.env, HACKTRICKS_OFFLINE: "1", HACKTRICKS_CACHE_DIR: cache } as Record<string, string>,
   });
   transport.stderr?.on("data", (d: Buffer) => {
     const s = d.toString();

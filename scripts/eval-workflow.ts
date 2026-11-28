@@ -33,6 +33,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { openDbReadonly, STOPWORDS } from "../src/db.js";
+import { scratchCache } from "./scratch-cache.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SCENARIOS_PATH = path.join(PKG_ROOT, "tests", "scenarios.json");
@@ -100,8 +101,9 @@ const transport = new StdioClientTransport({
   command: process.execPath,
   args: [path.join(PKG_ROOT, "dist", "server.js")],
   stderr: "ignore",
-  // The background index refresh stays off: the report describes the bundled index.
-  env: { ...process.env, HACKTRICKS_OFFLINE: "1" } as Record<string, string>,
+  // The background index refresh stays off and the cache is a scratch folder:
+  // the report describes the bundled index.
+  env: { ...process.env, HACKTRICKS_OFFLINE: "1", HACKTRICKS_CACHE_DIR: scratchCache("eval-workflow") } as Record<string, string>,
 });
 const client = new Client({ name: "eval-workflow", version: "0.0.1" });
 await client.connect(transport);

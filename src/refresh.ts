@@ -13,7 +13,8 @@
  *   HACKTRICKS_OFFLINE=1    never touch the network
  *   HACKTRICKS_INDEX_URL    base URL to fetch index files from, instead of
  *                          this project's releases
- *   HACKTRICKS_CACHE_DIR    where downloaded indexes are kept
+ *   HACKTRICKS_CACHE_DIR    where downloaded indexes are kept and, on Windows,
+ *                          the copy of the bundled index a server is started on
  */
 import fs from "node:fs";
 import os from "node:os";
@@ -30,6 +31,8 @@ const DOWNLOAD_TIMEOUT_MS = 10 * 60_000;
 const FILES = ["meta.json", "toc.json", "hacktricks.db"];
 /** A download slower than this (see DOWNLOAD_TIMEOUT_MS) cannot still be in progress. */
 const STALE_AFTER_MS = 60 * 60_000;
+/** The cache folder of an index: its layout and its sync time as digits, so that folders sort oldest first. */
+const folderOf = (syncedAt: string): string => `index-${INDEX_SCHEMA}-${syncedAt.replace(/\D/g, "")}`;
 
 export interface IndexMeta {
   /** INDEX_SCHEMA of the server that built the index. */
@@ -84,6 +87,16 @@ function cacheDir(): string {
   return path.join(process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache"), "hacktricks-mcp");
 }
 
+/** The metadata of the index in a folder, when it names a sync time. */
+function readMeta(dir: string): IndexMeta | null {
+  try {
+    const meta = JSON.parse(fs.readFileSync(path.join(dir, "meta.json"), "utf8")) as IndexMeta;
+    return typeof meta.syncedAt === "string" ? meta : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Index files are attached to this project's releases; package.json is the one place the repository is named. */
 function releaseUrl(name: string): string {
   const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -100,6 +113,14 @@ function remove(dir: string): void {
     fs.rmSync(dir, { recursive: true, force: true });
   } catch {
     // still in use elsewhere
+  }
+}
+
+/** Remove what a process that died during a download or a copy left behind. */
+function removeStaleStaging(cache: string): void {
+  for (const name of fs.readdirSync(cache)) {
+    const stale = path.join(cache, name);
+    if (name.startsWith("tmp-") && Date.now() - fs.statSync(stale).mtimeMs > STALE_AFTER_MS) remove(stale);
   }
 }
 
@@ -132,13 +153,9 @@ async function newerIndex(syncedAt: string): Promise<Index | null> {
 
   const cache = cacheDir();
   fs.mkdirSync(cache, { recursive: true });
-  const dir = path.join(cache, `index-${INDEX_SCHEMA}-${meta.syncedAt.replace(/\D/g, "")}`);
+  const dir = path.join(cache, folderOf(meta.syncedAt));
   if (!fs.existsSync(path.join(dir, "hacktricks.db"))) {
-    // Remove what a process that died mid-download left behind.
-    for (const name of fs.readdirSync(cache)) {
-      const stale = path.join(cache, name);
-      if (name.startsWith("tmp-") && Date.now() - fs.statSync(stale).mtimeMs > STALE_AFTER_MS) remove(stale);
-    }
+    removeStaleStaging(cache);
     const staging = fs.mkdtempSync(path.join(cache, "tmp-"));
     try {
       for (const name of FILES) {
@@ -165,10 +182,95 @@ async function newerIndex(syncedAt: string): Promise<Index | null> {
 }
 
 /**
+ * A copy of the bundled index in the cache, under the name a download of the
+ * same index has, so that one stands for both. Windows does not let a file
+ * that is open be replaced: a server that served the package's own index kept
+ * npx from updating the package for as long as it ran (npm stopped with EBUSY
+ * on data/hacktricks.db). From the copy, no file of the package stays open.
+ *
+ * The folder, or null when the cache cannot be written to: the package's own
+ * index is served then.
+ */
+function cachedCopy(bundledDir: string, syncedAt: string): string | null {
+  let staging: string | undefined;
+  try {
+    const cache = cacheDir();
+    const dir = path.join(cache, folderOf(syncedAt));
+    const whole = (): boolean => {
+      try {
+        return FILES.every((name) => fs.statSync(path.join(dir, name)).size === fs.statSync(path.join(bundledDir, name)).size);
+      } catch {
+        return false;
+      }
+    };
+    if (whole()) return dir;
+    fs.mkdirSync(cache, { recursive: true });
+    removeStaleStaging(cache);
+    // A folder of that name that is not the whole index. One that appeared
+    // since the check above is another server's finished copy, and stays.
+    if (fs.existsSync(dir)) remove(dir);
+    staging = fs.mkdtempSync(path.join(cache, "tmp-"));
+    for (const name of FILES) fs.copyFileSync(path.join(bundledDir, name), path.join(staging, name));
+    // Another server process may have made the same copy meanwhile.
+    try {
+      fs.renameSync(staging, dir);
+    } catch {
+      // then that copy is used below
+    }
+    return whole() ? dir : null;
+  } catch {
+    // no room or no permission: the package's own index is served
+    return null;
+  } finally {
+    if (staging) remove(staging);
+  }
+}
+
+/**
+ * The index a server starts on: the database `explicitPath` names, when one is
+ * named; else the bundled one, from a copy in the cache on Windows; replaced by
+ * the newest index an earlier run downloaded when that is newer and still
+ * whole. Starting on a downloaded one means a session uses the latest index it
+ * already has from its first tool call, with or without a network.
+ */
+export function startupIndex(bundledDir: string, explicitPath?: string): Index {
+  if (explicitPath) return openIndex(bundledDir, explicitPath);
+  const meta = readMeta(bundledDir);
+  const copy = meta && process.platform === "win32" ? cachedCopy(bundledDir, meta.syncedAt) : null;
+  let bundled: Index;
+  try {
+    bundled = openIndex(copy ?? bundledDir);
+  } catch (err) {
+    // A copy that does not open is of no use to the next server either.
+    if (!copy) throw err;
+    remove(copy);
+    console.error(`hacktricks-mcp: ignoring the copy of the bundled index in ${copy}: ${(err as Error).message}`);
+    bundled = openIndex(bundledDir);
+  }
+  const newer = newestCachedIndex(bundled);
+  if (newer) bundled.db.close();
+  // Cached indexes older than the one this server starts on are of no use
+  // from now on. After the close: on Windows a folder in use cannot be removed.
+  removeOlderThan((newer ?? bundled).meta.syncedAt);
+  return newer ?? bundled;
+}
+
+/** Remove from the cache every index older than the one with this sync time. */
+function removeOlderThan(syncedAt: string): void {
+  try {
+    const cache = cacheDir();
+    const keep = folderOf(syncedAt);
+    for (const name of fs.readdirSync(cache)) {
+      if (name.startsWith(`index-${INDEX_SCHEMA}-`) && name < keep) remove(path.join(cache, name));
+    }
+  } catch {
+    // no cache folder yet
+  }
+}
+
+/**
  * The newest index an earlier run of this server downloaded, when it is newer
- * than `current` and still whole; otherwise null. Starting on it means a
- * session uses the latest index it already has from its first tool call, with
- * or without a network.
+ * than `current` and still whole; otherwise null.
  */
 export function newestCachedIndex(current: Index): Index | null {
   try {
@@ -179,7 +281,7 @@ export function newestCachedIndex(current: Index): Index | null {
     const newest = folders[folders.length - 1];
     if (!newest) return null;
     const index = openIndex(path.join(cache, newest));
-    // An older download is normal after a package upgrade; a damaged one is worth a line.
+    // An older one is normal after a package upgrade; a damaged one is worth a line.
     if (usable(index)) {
       if (index.meta.syncedAt > current.meta.syncedAt) return index;
     } else {
