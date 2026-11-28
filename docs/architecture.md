@@ -68,7 +68,7 @@ The Cloud book also keeps structured data that is not markdown: its permission l
 
 ## Markdown cleaning
 
-`src/markdown.ts` cleans each page outside code blocks only. A code block is stored as it is, because the pages on injection hold `{{ ... }}`, `{% ... %}` and `<!-- -->` that look like templating and are payloads. What a template carries stays, such as the name of a tab and the text of a warning.
+`src/markdown.ts` cleans each page outside code blocks only. A code block is stored as it is, because the pages on injection hold `{{ ... }}`, `{% ... %}` and `<!-- -->` that look like templating and are payloads; inside one, only trailing spaces and runs of blank lines are trimmed, as on the rest of the page. What a template carries stays, such as the name of a tab and the text of a warning.
 
 1. A `{% hint %}` block stays as its text, led by `**Note.**`, `**Tip.**`, `**Warning.**` or `**Caution.**` as its style says. The one that advertises training is dropped, and so is a line of a hint that holds an include.
 2. An HTML comment that starts a line is removed; the wiki does not show it either. One inside a line is content (the XML pages hold `<!--`).

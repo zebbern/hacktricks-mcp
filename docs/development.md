@@ -127,6 +127,26 @@ Reference numbers, index of 2,952 pages at upstream `45eade3` and `49dae14`. The
 
 A page is 6.3 times that section in the median page, and under 2.5 times in a tenth of the pages. HackTricks text runs at 3.6 characters to a token in search results and at 4.2 to 4.3 in pages and sections, so the tokens of a later run follow from its characters.
 
+## Against a grep-based server
+
+Measured once, on 2026-11-28: this server against `hacktricks-mcp-server` 1.3.4 as published (the server of `Xplo8E/hacktricks-mcp-server`, ripgrep over a clone of the main book), both reading the main book at `45eade3`. It ran on Linux, because as published that server's search returns nothing on Windows: it misreads the drive letter in ripgrep's output, and its own fix for that is unmerged. Tokens as the `o200k_base` tokenizer counts them. A script made every call; no agent took part.
+
+| | This server | That server |
+|---|---|---|
+| The 30 keyword queries of the gate that the main book answers: expected page among five results | 30, at a median of 532 tokens | 9; 17 queries returned nothing, and the 13 that returned files took 578 |
+| The 69 scenario questions that the main book answers, asked as typed: page found when it names the technique, and when it only describes the situation | 67 and 39 | 0 and 0: every one answered "No results found" |
+| Outline of the 69 pages that answer them | 273 tokens, 18 headings | 334 tokens, 30 "headings" |
+| Their 1,626 sections, read one by one | 884,257 tokens, whole | 634,502 tokens, with 350 sections cut short |
+| Their 1,357 code blocks | all returned | 185 missing, with prose labelled as code in their place |
+
+Why it comes out so:
+
+- Its search hands the query to `rg` as one pattern, so a phrase or a question matches nothing unless a line holds it word for word. In 7 of the 13 searches that did return files, one of the five was the table of contents.
+- It finds headings with a regular expression over every line, so 850 of the 2,689 headings it sees on these pages are `#` comments inside code blocks. The same rule ends 350 sections early and leaves out 1,226,417 characters.
+- A whole page costs the same in both, about 4,150 tokens for the median page. Ours comes in slices of 20,000 characters and came to about 7% more over the 69 pages, because a cut slice repeats the outline.
+
+What it does not show: any server but this one, what its maintainer could make of it, or what a live agent would do with either.
+
 ## Edge cases
 
 `npm run smoke` runs two end-to-end tests over stdio against the built server. `scripts/smoke.ts` calls the four tools. `scripts/smoke-edge.ts` sends what an agent or a host can send by mistake or on purpose: a page path that names several pages, a permission or a path in a query, pasted text and oversized fields, permissions glued into one entry or malformed, a blank environment setting, an index that cannot be read and a Node.js that is too old. It also pins the cleaner's rules, the lookup of a section by its exact name, and that the index a server starts on leaves the package's files replaceable, which a server on Windows once did not. Every check is the answer to a defect an earlier release had. The input rules they pin down are in [tools.md](tools.md#input-limits).

@@ -58,7 +58,7 @@ Reads one page from the index.
 - `outlineOnly` is the cheap first read for a long page: a median of 688 characters, and nine pages in ten under 1,382, against a median page of about 10,800 characters in the main book and 7,100 in the Cloud book ([what a read costs](development.md#what-a-read-costs)). Each heading carries the length of its section, and a heading whose section is mostly subsections says so (`24,716 chars in 19 subsections`).
 - Without `section`, returns the whole page in slices of 20,000 characters. A slice that is cut appends the heading outline and ends with `offset=<n>` for the rest. A section without subsections that is longer than 20,000 characters is read the same way.
 - A path is matched as it is, then as the whole ending of a path (with or without `.md`), then as a piece that exactly one page has. A piece that several pages have is not read as one of them: `"kerberos"`, which lies in six paths, returns an error that lists them, and a piece that lies in at least half of the paths (`"e"`) returns only how common it is.
-- Content is cleaned at index time outside code blocks, and nothing inside a code block is touched ([architecture.md](architecture.md#markdown-cleaning)).
+- Content is cleaned at index time outside code blocks; inside one, only trailing spaces and runs of blank lines are trimmed ([architecture.md](architecture.md#markdown-cleaning)).
 
 **Returns** (structured): `title`, `book`, `path`, `url`, `wikiUrl`, `outline`, `content`, `truncated`, `nextOffset` (where a cut text continues; absent when everything was returned).
 

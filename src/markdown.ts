@@ -65,8 +65,9 @@ export function cleanMarkdown(raw: string): string {
     return [`**${HINT_LABELS[style] ?? "Note"}.** ${lines[0].trim()}`, ...lines.slice(1)].join("\n");
   });
 
-  // Code blocks are passed on untouched, one line as they are; the stretches
-  // between them are cleaned.
+  // Code blocks are passed on line by line as they are, apart from the
+  // trailing spaces and runs of blank lines trimmed from the whole page
+  // below; the stretches between them are cleaned.
   const kept: string[] = [];
   let prose: string[] = [];
   let inCode = false;
