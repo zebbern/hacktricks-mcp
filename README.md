@@ -48,6 +48,12 @@ mkdir -p ~/.codex/agents && curl -fsSLo ~/.codex/agents/hacktricks-researcher.to
 
 Packaging details are in [docs/agents.md](docs/agents.md).
 
+**The skill alone, for other hosts** (Cursor, OpenCode, Windsurf and the other agents the [skills CLI](https://github.com/vercel-labs/skills) supports): the installer adds the skill and nothing else, so add the MCP server with the config above as well. The command asks which agents to install into; `-a <agent>` names one:
+
+```bash
+npx skills add zebbern/hacktricks-mcp --skill hacktricks
+```
+
 Then ask things like:
 
 - *"Search HackTricks for kerberoast and give me the attack commands"*
