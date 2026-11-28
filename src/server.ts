@@ -441,13 +441,13 @@ server.registerTool(
     inputSchema: {
       provider: z.enum(PROVIDERS).describe('The cloud: "aws", "gcp", "azure" or "k8s"'),
       permissions: z
-        .array(z.string().min(1))
+        .array(z.string().min(1).max(MAX_PERMISSION))
         .min(1)
         .max(200)
         .describe(
           'The permissions held, as the cloud writes them: "iam:PassRole", "iam.serviceAccounts.actAs", ' +
           '"Microsoft.Authorization/roleAssignments/write", "Application.ReadWrite.All". Wildcards as in a policy ' +
-          '("iam:*", "s3:Get*"). For k8s, one grant per entry as "verb resource[.group][/subresource]", "verb *" or ' +
+          '("iam:*", "s3:Get*", and ? for any single character). For k8s, one grant per entry as "verb resource[.group][/subresource]", "verb *" or ' +
           '"verb /url": "create pods", "get secrets", "create pods/exec", "get *", "impersonate users".',
         ),
       limit: z
@@ -470,6 +470,7 @@ server.registerTool(
       combinations: z.array(
         z.object({ severity: z.enum(SEVERITIES), permissions: z.array(z.string()) }),
       ),
+      combinationsTotal: z.number().describe("Combination rules held in all; at most 25 are listed, the most severe first"),
       escalation: z.array(
         z.object({
           id: z.string(),
@@ -513,7 +514,12 @@ server.registerTool(
     const lines = [`hacktricks_cloud_permissions: ${provider}, ${check.risk.length} permissions.`, "", "Risk per permission"];
     for (const r of check.risk) lines.push(`  ${label(r.severity)} ${r.permission}${r.note ? `  (${r.note})` : ""}`);
 
-    lines.push("", check.combinations.length > 0 ? "Combinations held (every permission of the combination is held)" : "Combinations held: none");
+    const combinationsTitle =
+      (check.combinations.length > 0 ? "Combinations held (every permission of the combination is held)" : "Combinations held: none") +
+      (check.combinationsTotal > check.combinations.length
+        ? ` (first ${check.combinations.length} of ${count(check.combinationsTotal)}, the most severe first)`
+        : "");
+    lines.push("", combinationsTitle);
     for (const c of check.combinations) lines.push(`  ${label(c.severity)} ${c.permissions.join(" + ")}`);
 
     lines.push(

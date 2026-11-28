@@ -29,6 +29,8 @@ export type Rating = Severity | "not rated";
 
 /** How many techniques are listed at most; `escalationTotal` says how many there are. */
 const ESCALATION_LIMIT = 30;
+/** How many combination rules are listed at most, the most severe first; `combinationsTotal` says how many there are. A wildcard that covers everything holds all of them. */
+export const COMBINATION_LIMIT = 25;
 /** How many rated permissions a wildcard grant names at most, per rating. */
 const WILDCARD_EXAMPLES = 12;
 
@@ -68,6 +70,8 @@ export interface PermissionCheck {
   provider: Provider;
   risk: RiskAnswer[];
   combinations: { severity: Severity; permissions: string[] }[];
+  /** How many combination rules the held permissions complete in all. */
+  combinationsTotal: number;
   escalation: EscalationMatch[];
   escalationTotal: number;
   /** Techniques of the provider that depend on more than permissions, so they are neither listed nor ruled out. */
@@ -128,7 +132,7 @@ function dataOf(db: DatabaseSync, provider: Provider): ProviderData {
  */
 export function checkPermissions(db: DatabaseSync, provider: Provider, held: string[], limit = ESCALATION_LIMIT): PermissionCheck {
   const data = dataOf(db, provider);
-  const grants = held.map((grant) => grant.trim()).filter((grant) => grant.length > 0);
+  const grants = uniqueGrants(provider, held);
   const kubernetes: KubernetesGrant[] = [];
   if (provider === "k8s") {
     for (const grant of grants) {
@@ -138,9 +142,15 @@ export function checkPermissions(db: DatabaseSync, provider: Provider, held: str
     }
   }
 
-  const combinations = data.combinations.filter((combination) =>
+  // Most severe first, and among equals the rule that needs fewer permissions.
+  const heldCombinations = data.combinations.filter((combination) =>
     combination.permissions.every((need) => grants.some((grant) => covers(grant, need, provider))),
   );
+  heldCombinations.sort(
+    (a, b) =>
+      SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity) || a.permissions.length - b.permissions.length,
+  );
+  const combinations = heldCombinations.slice(0, COMBINATION_LIMIT);
 
   const matches: EscalationMatch[] = [];
   const byId = new Map<string, EscalationRow>();
@@ -185,10 +195,20 @@ export function checkPermissions(db: DatabaseSync, provider: Provider, held: str
       a.id.localeCompare(b.id),
   );
 
+  // The same permission twice, or in another case, is rated once.
+  const risk: RiskAnswer[] = [];
+  const rated = new Set<string>();
+  for (const answer of provider === "k8s" ? kubernetes.map((grant, i) => rateRule(data, grant, grants[i])) : grants.map((grant) => rateGrant(data, grant, provider))) {
+    if (rated.has(answer.permission)) continue;
+    rated.add(answer.permission);
+    risk.push(answer);
+  }
+
   return {
     provider,
-    risk: provider === "k8s" ? kubernetes.map((grant, i) => rateRule(data, grant, grants[i])) : grants.map((grant) => rateGrant(data, grant, provider)),
+    risk,
     combinations,
+    combinationsTotal: heldCombinations.length,
     escalation: matches.slice(0, limit),
     escalationTotal: matches.length,
     notEvaluated,
@@ -196,6 +216,31 @@ export function checkPermissions(db: DatabaseSync, provider: Provider, held: str
     // cover everything the book describes.
     sections: provider === "k8s" ? [] : sectionsFor(db, provider, grants),
   };
+}
+
+/**
+ * The permissions to check, each once. A Kubernetes grant has spaces of its own.
+ * Elsewhere several permissions pasted into one entry ("iam:PassRole,
+ * lambda:CreateFunction", a list in quotes, or one of the headings this tool
+ * prints, "iam:PassRole (+ a compute service)") are split, and the pieces that
+ * are permissions are kept, so that none is rated "not rated" for being glued
+ * to another. An entry whose pieces are not permissions (a policy document in
+ * braces, a sentence) stays whole, so that the caller sees it rated as such.
+ */
+function uniqueGrants(provider: Provider, held: string[]): string[] {
+  const isPermission = (piece: string) => /[:./]/.test(piece);
+  const ofEntry = (entry: string): string[] => {
+    if (provider === "k8s" || /[{}]/.test(entry)) return [entry];
+    // A sentence ends in its last permission: "the role holds iam:PassRole."
+    const pieces = entry
+      .split(/[\s,;"'()[\]]+/)
+      .map((piece) => piece.replace(/[.,;:!?]+$/, "").trim())
+      .filter(Boolean);
+    if (pieces.length <= 1) return pieces;
+    const permissions = pieces.filter(isPermission);
+    return permissions.length > 0 ? permissions : [entry];
+  };
+  return [...new Set(held.flatMap(ofEntry).map((entry) => entry.trim()).filter((entry) => entry.length > 0))];
 }
 
 /** The service a permission belongs to, as the catalog spells a technique's `service`: the first segment of its name. */
@@ -220,7 +265,8 @@ function rateGrant(data: ProviderData, grant: string, provider: Provider): RiskA
   }
   const matched = SEVERITIES.filter((s) => (counts.get(s) ?? 0) > 0);
   if (matched.length === 0) return { permission: grant, severity: "not rated" };
-  const note = [`matches ${matched.reduce((n, s) => n + (counts.get(s) ?? 0), 0).toLocaleString("en-US")} rated permissions`];
+  const matchedCount = matched.reduce((n, s) => n + (counts.get(s) ?? 0), 0);
+  const note = [`matches ${matchedCount.toLocaleString("en-US")} rated permission${matchedCount === 1 ? "" : "s"}`];
   for (const severity of ["critical", "high"] as const) {
     const list = examples.get(severity) ?? [];
     if (list.length === 0) continue;
