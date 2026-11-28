@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for improving hacktricks-mcp. This project has a few structural invariants that exist for good reasons. Please read this file before your first PR; CI enforces most of it, but understanding the why saves everyone time.
+Read this before a first pull request. CI enforces most of it; the reasons are here.
 
 ## Project invariants
 
@@ -18,40 +18,39 @@ The same discipline holds for the researcher subagent, which is written to stand
 - `kimi-plugin/agents/hacktricks-researcher.md` and `.codex/agents/hacktricks-researcher.toml` are generated from it in the Kimi and Codex formats. Never edit them by hand. Run `npm run sync:agents` after touching the canonical file. CI fails on drift.
 - `claude plugin validate` does not read skill or subagent files, so its pass says nothing about them. Check their frontmatter against the host's own documentation when you change it.
 
-### 2. Version consistency
+### 2. Versions change in one command
 
-`npm version patch|minor|major` is the only way to bump versions. The lifecycle hook stamps `server.json` (including `packages[].version`), the three plugin manifests (`.claude-plugin/`, `.codex-plugin/`, `.zcode-plugin/`) and the plugin's entry in `.claude-plugin/marketplace.json`, and stages them into the version commit. Never hand-edit version fields in those files.
+`npm version patch|minor|major` is the only way to bump versions. Its lifecycle hook stamps `server.json`, the three plugin manifests (`.claude-plugin/`, `.codex-plugin/`, `.zcode-plugin/`) and the plugin's entry in `.claude-plugin/marketplace.json`, and stages them into the version commit. Never hand-edit version fields in those files.
 
-Index-only releases use the same command: `sync.yml` runs `npm version patch` whenever the index changes, so an index change never needs a manual bump.
-
-Exception: `kimi-plugin/kimi.plugin.json` is versioned by the Kimi marketplace tooling (`+local` timestamps), not by npm.
+Index-only releases use the same command: `sync.yml` runs it whenever the index changes, so an index change never needs a manual bump.
 
 ### 3. The index is generated
 
-`data/` is produced by `npm run sync` from the upstream HackTricks and HackTricks Cloud repositories. Only `data/upstream.json` is tracked, as the record of which upstream commits and index layout the last release holds; it carries no time, so a local sync leaves it unchanged. Run `npm run sync` once after cloning to build the index (it needs the network), and again when upstream has moved. Do not hand-edit anything in `data/`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the upstream commits or the index layout change; manual syncs happen via `npm run sync`.
+`data/` is produced by `npm run sync` from the upstream HackTricks and HackTricks Cloud repositories. Only `data/upstream.json` is tracked, as the record of which upstream commits and index layout the last release holds; it carries no time, so a local sync leaves it unchanged. Run `npm run sync` once after cloning to build the index (it needs the network), and again when upstream has moved. Do not hand-edit anything in `data/`.
 
-When a change alters what the indexer writes (a column, a title, a category, a link), bump `INDEX_SCHEMA` in `src/db.ts`. The sync script rebuilds on a different number even if upstream has not moved, and a running server refuses to download an index of another layout.
+When a change alters what the indexer writes, bump `INDEX_SCHEMA` in `src/db.ts` ([docs/architecture.md](docs/architecture.md#data-files)).
 
 ### 4. Quality is gated
 
-Any change to `src/db.ts` (ranking, aliases), `src/markdown.ts` (cleaning), `src/permissions.ts`, `src/kubernetes-rbac.ts` or `src/permission-check.ts` (the permissions check) must keep all three gates green: `npm run eval` at 42/42, `npm run eval:workflow` (the route the skill gives must find the page for at least 90% of the scenario questions, asked either way) and `npm run eval:permissions` (every technique of the catalog that names permissions is listed from exactly those, and none without them). If a legitimate change breaks a fixture or a scenario, discuss in the PR whether the test or the code is wrong, then update `tests/` deliberately, never to just make CI green. Look a fixture's expected answer up in the book's data rather than copying it from the tool.
+Any change to `src/db.ts` (ranking, aliases), `src/markdown.ts` (cleaning), `src/permissions.ts`, `src/kubernetes-rbac.ts` or `src/permission-check.ts` (the permissions check) must keep all three gates green: `npm run eval`, `npm run eval:workflow` and `npm run eval:permissions` ([what each proves](docs/development.md#evaluating-quality)). If a legitimate change breaks a fixture or a scenario, discuss in the PR whether the test or the code is wrong, then update `tests/` deliberately, never to just make CI green. Look a fixture's expected answer up in the book's data rather than copying it from the tool.
 
-Run `npm run eval:workflow` before and after a ranking change and compare. What the skill tells agents about querying and the reference numbers in `docs/development.md` rest on that run, so update both when the results move; do not change search guidance on assumption. `docs/development.md` also lists the ideas that were measured and rejected, so check it before trying one of them again.
+Run `npm run eval:workflow` before and after a ranking change and compare. What the skill tells agents about querying rests on that run, so update the skill and the reference numbers in `docs/development.md` when the results move; do not change search guidance on assumption. `docs/development.md` also lists the ideas that were measured and rejected, so check it before trying one of them again.
 
-### 5. Docs are DRY
+### 5. Docs have one home
 
-Each topic has exactly one home: tool API in `docs/tools.md`, pipeline in `docs/architecture.md`, dev/release flow in `docs/development.md`, ecosystem packaging in `docs/agents.md`. The README links out instead of repeating details. No em-dashes in any markdown (project style).
+Each topic has exactly one home: tool API in `docs/tools.md`, pipeline in `docs/architecture.md`, dev/release flow in `docs/development.md`, ecosystem packaging in `docs/agents.md`. The README links out instead of repeating details.
+
+A document describes the present state, not how it got there: a rule stays with the one number or reason that backs it, and the history stays in git. Documents stay under 350 lines, the skill and the researcher under 250. No em-dashes in any markdown (project style).
 
 ## Development loop
 
+[docs/development.md](docs/development.md) has the setup and every command. In short: `npm run sync` once after cloning, and after a change to `src/` run
+
 ```bash
-npm install
-npm run sync                 # build the index from both books
-# ... edit src/ ...
 npm run build && npm run eval && npm run eval:workflow && npm run eval:permissions && npm run smoke && npm run smoke:refresh
 ```
 
-Add an eval fixture in `tests/queries.json` when you add or change search behavior, and a case in `tests/permissions.json` when you change the permissions check. When you fix an input the server answered wrongly, add a check for it to `scripts/smoke-edge.ts` ([docs/development.md](docs/development.md#edge-cases)). See [docs/development.md](docs/development.md) for details.
+Add an eval fixture in `tests/queries.json` when you add or change search behavior, and a case in `tests/permissions.json` when you change the permissions check. When you fix an input the server answered wrongly, add a check for it to `scripts/smoke-edge.ts` ([docs/development.md](docs/development.md#edge-cases)).
 
 ## Releasing (maintainers)
 
@@ -61,13 +60,11 @@ npm version patch -m "chore: release v%s" && git push --follow-tags
 
 The message is the one `sync.yml` uses; without `-m`, npm titles the commit with the bare version number.
 
-This triggers `release.yml`: full quality gates, GitHub Release with index assets, npm publish and, in a second job, an MCP registry publish, both through OIDC trusted publishing. That job waits for npm to serve the version and can be re-run on its own. If the registry refuses, the package is already out; publish the listing by hand from the released tag ([docs/agents.md](docs/agents.md#mcp-registry)):
+What the release workflow does, and what to check before a release, is in [docs/development.md](docs/development.md#releasing-to-npm). If the MCP registry refuses the listing, the package is already out; publish the listing by hand from the released tag ([docs/agents.md](docs/agents.md#mcp-registry)):
 
 ```bash
 mcp-publisher validate && mcp-publisher publish
 ```
-
-See [docs/agents.md](docs/agents.md) for registry rules (`mcpName`, version match, 100-char description cap).
 
 ## Legal note
 
