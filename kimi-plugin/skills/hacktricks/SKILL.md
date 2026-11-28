@@ -37,7 +37,7 @@ PAGES:    <each path read, with the link from the page's first lines>
 - Let the size in each hit choose the read. Under about 8,000 characters, read the page whole. Above that, call `hacktricks_get_page` with `outlineOnly: true` first and then with `section` for the part that answers: reading a long page whole just to find its headings can cost 20,000 characters, and its outline costs about 800.
 - Add `codeOnly: true` to a `section` call when only the commands matter.
 - A response that comes back cut (`truncated: true`) ends with `offset=<n>` and, for a whole page, its outline. Pick a heading and call again with `section`. When the section itself is cut, call again with the same `section` and that `offset`, and repeat until nothing is cut.
-- `section` matches the first heading that contains the text, so two or three words from the outline make it unique. A wrong guess costs little, because the error lists every heading.
+- `section` takes a heading with exactly that text first, so copy the heading from the outline as it is printed; marks and extra spaces do not count. A wrong guess costs little, because the error lists every heading, and the answer says when several sections share the name.
 - A hit ending in `README.md` is often a landing page that only lists sub-pages. When a named sibling is in the results (`lxd-privilege-escalation.md`), read that instead.
 
 ## Answer
