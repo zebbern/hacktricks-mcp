@@ -27,9 +27,12 @@ jobs:
       # The index itself is not tracked (see .gitignore), so it is rebuilt on
       # every run. What tells a new index from the last one released is the
       # record in data/upstream.json: the layout number and the upstream commits.
+      # A step output takes one "key=value" a line, so the record is read as
+      # one compact line.
       - name: Remember the index on record
         id: before
-        run: echo "record=$(cat data/upstream.json)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "record=$(node -p "JSON.stringify(require('./data/upstream.json'))")" >> "$GITHUB_OUTPUT"
 
       - name: Sync upstream and rebuild index
         run: npm run sync
@@ -48,7 +51,8 @@ jobs:
         env:
           BEFORE: ${{ steps.before.outputs.record }}
         run: |
-          if [ "$(cat data/upstream.json)" = "$BEFORE" ]; then
+          AFTER=$(node -p "JSON.stringify(require('./data/upstream.json'))")
+          if [ "$AFTER" = "$BEFORE" ]; then
             echo "Index unchanged, nothing to commit"
             exit 0
           fi
