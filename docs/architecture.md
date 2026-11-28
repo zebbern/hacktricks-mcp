@@ -152,14 +152,14 @@ The catalog does not describe everything the book does (`Microsoft.Authorization
 
 `.github/workflows/sync.yml` runs at `17 4 */3 * *` (every 3rd day, off-peak minute) plus manual dispatch:
 
-1. `npm run sync` (skips cleanly if neither upstream SHA has changed)
+1. `npm run sync` rebuilds the index. Locally the script skips when the index is already built for the same upstream commits; the workflow starts without one.
 2. `npm run eval`, `npm run eval:workflow` and `npm run eval:permissions` (the three quality gates, see below)
-3. commits `data/` with both upstream SHAs in the message and tags `index-YYYY.MM.DD-<sha>-<sha>` when the index changed
+3. when the layout number or an upstream commit in `data/meta.json` differs from the one on record, commits `data/meta.json` with both upstream SHAs in the message and tags `index-YYYY.MM.DD-<sha>-<sha>`
 4. on a change, bumps the patch version (`npm version patch`, which also stamps the manifests and tags `vX.Y.Z`), pushes it and dispatches `release.yml` on that tag
 
-Every install path resolves to the npm package, so a committed index only reaches users once it is released. Step 4 closes that gap: one sync, one patch release. The dispatch is explicit because a tag pushed with `GITHUB_TOKEN` does not fire the `push` trigger in `release.yml`; `workflow_dispatch` always does.
+The index itself is not kept in git: every install path resolves to the npm package or to a release asset. Only `data/meta.json` is, as the record of what was released, and step 3 compares it with the record before the rebuild. Step 4 closes the gap to users: one sync, one patch release. The dispatch is explicit because a tag pushed with `GITHUB_TOKEN` does not fire the `push` trigger in `release.yml`; `workflow_dispatch` always does.
 
-Because the SHA check happens first, quiet weeks produce zero commits, zero releases and zero noise.
+Because the record is compared, quiet weeks produce zero commits, zero releases and zero noise.
 
 ## Runtime index refresh
 
@@ -215,4 +215,4 @@ Two end-to-end tests run in the same places, `npm run smoke`: `scripts/smoke.ts`
 - **One index for both books over one index per book**: most questions do not say which book answers them (`privilege escalation`, `docker`, `github actions`), and one search must cover both. The `book` column costs nothing and lets a caller narrow by book.
 - **A dedicated check for cloud permissions over search**: a question such as "what can I do with `iam:PassRole` and `lambda:CreateFunction`" asks for data the book keeps in structured form: the rating of each permission and the techniques they enable. In the evaluation the check finds the page for all 6 permission questions, with the section to read. The plain search has an expected page among its results for all 6 as well and reads less, so the check earns its first place by what it adds, which the pages do not hold in one place.
 - **Tarball over git clone in sync**: two HTTP requests, no history, no auth.
-- **Committing `data/`**: makes the repo self-contained; cloning gives you a working server immediately, and the npm package ships the same bytes.
+- **Not keeping the index in git**: every install path resolves to the npm package or to a release asset, so a committed index served local development only. It cost 23 MB of history per sync once the Cloud book made it 64 MB, and a 23 MB download for a plugin install that copies it without using it. `data/meta.json` stays tracked as the record of what was released, `npm run sync` builds the index after a clone, and the repository archive is 0.15 MB.

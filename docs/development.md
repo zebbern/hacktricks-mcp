@@ -8,9 +8,10 @@ Local setup, testing and releasing. Pipeline internals are in [architecture.md](
 git clone https://github.com/zebbern/hacktricks-mcp.git
 cd hacktricks-mcp
 npm install
+npm run sync     # build the index from the two books; it needs the network
 ```
 
-Requires Node.js 22.13 or newer.
+Requires Node.js 22.13 or newer. The index is not in git ([architecture.md](architecture.md#design-choices-and-why)), so without the last line there is nothing to serve or test.
 
 ## Scripts
 
@@ -140,7 +141,7 @@ npm version patch -m "chore: release v%s"   # or minor / major
 git push --follow-tags
 ```
 
-Run `npm run sync` first. The release job rebuilds the index in its own runner and publishes that, so a committed index that is behind upstream would ship a newer index than the commit holds, and the next sync would publish a second patch for the same content.
+Run `npm run sync` first, and commit `data/meta.json` if it changed. The release job rebuilds the index in its own runner and publishes that, so a record that is behind upstream would ship a newer index than the commit holds, and the next sync would publish a second patch for the same content.
 
 `npm version` automatically runs `scripts/version-sync.mjs` (npm lifecycle hook), which stamps the new version into `server.json`, the three plugin manifests and the marketplace entry, and stages them, so the version commit is always consistent. `kimi-plugin/kimi.plugin.json` is excluded on purpose: the Kimi marketplace manages its own numbering.
 
@@ -154,7 +155,7 @@ One-time prerequisites (already done for this repo): the first publish was manua
 
 The gates run inside the repository on CI's Node version, so they miss two things:
 
-- **The packed package.** Install the tarball somewhere else and start it from another folder. A package that looked for its index next to the working directory would fail here and pass everywhere else.
+- **The packed package.** Run `npm run sync` first, then install the tarball somewhere else and start it from another folder. A package that looked for its index next to the working directory would fail here and pass everywhere else.
 - **The oldest Node that `engines` allows.** Run the gates and both smoke tests once on Node 22.13 or a later 22.x.
 
 ```bash
@@ -167,7 +168,7 @@ The last command must print `hacktricks-mcp running on stdio` and exit 0. It pac
 
 ### What ships in the package
 
-Defined by `files` in `package.json`: `dist/`, `data/hacktricks.db`, `data/toc.json`, `data/meta.json`. The index inside the package is whatever the last sync committed, and every sync publishes a release, so users always get the freshest index that passed the gates.
+Defined by `files` in `package.json`: `dist/`, `data/hacktricks.db`, `data/toc.json`, `data/meta.json`. The index inside the package is the one the release job builds from upstream when it releases, and every sync publishes a release, so users always get the freshest index that passed the gates.
 
 The index is 64 MB unpacked, 57 MB of it the two books' pages and 7 MB the permission data, and makes the npm tarball 24 MB (12 MB for the main book alone). Each release also attaches the same index for the runtime refresh, and the workflow removes it from every older release after publishing, so the attachment does not pile up.
 

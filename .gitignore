@@ -3,3 +3,8 @@ dist/
 *.log
 .DS_Store
 tmp/
+
+# Built from upstream by `npm run sync`. Releases and the npm package carry
+# the index; only data/meta.json, the record of what was released, is tracked.
+data/hacktricks.db
+data/toc.json

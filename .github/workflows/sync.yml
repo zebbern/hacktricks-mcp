@@ -24,6 +24,14 @@ jobs:
       - run: npm ci
       - run: npm run build
 
+      # The index itself is not tracked (see .gitignore), so it is rebuilt on
+      # every run. What tells a new index from the last one released is the
+      # record in data/meta.json: the layout number and the upstream commits.
+      - name: Remember the index on record
+        id: before
+        run: |
+          echo "books=$(node -p "JSON.stringify({ schema: require('./data/meta.json').schema, books: require('./data/meta.json').books })")" >> "$GITHUB_OUTPUT"
+
       - name: Sync upstream and rebuild index
         run: npm run sync
 
@@ -38,15 +46,18 @@ jobs:
 
       - name: Commit updated index
         id: commit
+        env:
+          BEFORE: ${{ steps.before.outputs.books }}
         run: |
-          if git diff --quiet -- data/; then
+          AFTER=$(node -p "JSON.stringify({ schema: require('./data/meta.json').schema, books: require('./data/meta.json').books })")
+          if [ "$AFTER" = "$BEFORE" ]; then
             echo "Index unchanged, nothing to commit"
             exit 0
           fi
           BOOKS=$(node -p "Object.entries(require('./data/meta.json').books).map(([book, sha]) => book + '@' + sha.slice(0, 7)).join(' ')")
           git config user.name "hacktricks-mcp-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add data/meta.json
           git commit -m "chore: sync index with HackTricks upstream ${BOOKS}"
           git push
           echo "changed=true" >> "$GITHUB_OUTPUT"
@@ -60,9 +71,9 @@ jobs:
           git tag "$TAG"
           git push origin "$TAG"
 
-      # Every install path resolves to the npm package, so a committed index
-      # only reaches users once it is released. npm version also stamps the
-      # manifests (version-sync lifecycle hook) and creates the vX.Y.Z tag.
+      # Every install path resolves to the npm package, so the index rebuilt
+      # above only reaches users once it is released. npm version also stamps
+      # the manifests (version-sync lifecycle hook) and creates the vX.Y.Z tag.
       - name: Bump patch version
         if: steps.commit.outputs.changed == 'true'
         run: |

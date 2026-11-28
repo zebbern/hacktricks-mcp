@@ -94,7 +94,7 @@ This is the layout the hosts share: skills live in `skills/<name>/SKILL.md` at t
 - Codex CLI: `codex plugin marketplace add zebbern/hacktricks-mcp`, then `codex plugin add hacktricks --marketplace hacktricks-mcp`
 - ZCode: **Settings > Plugins > Add > Add plugin marketplace**, `zebbern/hacktricks-mcp`, then install `hacktricks` from the **Personal** tab
 
-How ZCode gets there, checked against its own installer on 2026-11-28: it takes `owner/repo` as a public GitHub repository, downloads it as one archive, reads `.claude-plugin/marketplace.json` at the root, resolves the entry's `"./"` to that root, and reads `.zcode-plugin/plugin.json` there. The archive must declare no Git submodules or LFS filters, and the whole repository is about 24 MB compressed because it carries the index, which a plugin install copies but does not use.
+How ZCode gets there, checked against its own installer on 2026-11-28: it takes `owner/repo` as a public GitHub repository, downloads it as one archive, reads `.claude-plugin/marketplace.json` at the root, resolves the entry's `"./"` to that root, and reads `.zcode-plugin/plugin.json` there. The archive must declare no Git submodules or LFS filters. It was about 23 MB while the index was tracked, which a plugin install copied without using it; since the index left git it is 0.15 MB.
 
 When bumping versions, the hook stamps `server.json`, the three plugin manifests and the marketplace entry. There is no extra code to maintain.
 
