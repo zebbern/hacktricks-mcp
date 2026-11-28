@@ -1,0 +1,7 @@
+{
+  "schema": 4,
+  "books": {
+    "hacktricks": "ad8795c026b5b1ea1dad3ad408949b92426e436b",
+    "hacktricks-cloud": "49dae1447e92cf1a65390b52f95fed6c15f41d2f"
+  }
+}

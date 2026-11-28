@@ -9,6 +9,9 @@
  *    - data/hacktricks.db  (SQLite FTS5)
  *    - data/toc.json       (each book's SUMMARY.md tree, keyed by book id)
  *    - data/meta.json      (upstream SHAs, sync time, page count, index schema)
+ *    - data/upstream.json  (upstream SHAs and index schema alone: tracked, as the
+ *                          record of what a release was built from, so that a
+ *                          local sync leaves it unchanged)
  */
 import { execFileSync } from "node:child_process";
 import { extract } from "tar";
@@ -40,6 +43,7 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const DATA_DIR = path.join(PKG_ROOT, "data");
 const DB_PATH = path.join(DATA_DIR, "hacktricks.db");
 const META_PATH = path.join(DATA_DIR, "meta.json");
+const RECORD_PATH = path.join(DATA_DIR, "upstream.json");
 const TOC_PATH = path.join(DATA_DIR, "toc.json");
 
 function upstreamSha(book: Book): string {
@@ -255,12 +259,13 @@ async function main() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.copyFileSync(tmpDb, DB_PATH);
     fs.writeFileSync(TOC_PATH, JSON.stringify(toc, null, 1));
+    const record = { schema: INDEX_SCHEMA, books: Object.fromEntries(shas) };
+    fs.writeFileSync(RECORD_PATH, `${JSON.stringify(record, null, 2)}\n`);
     fs.writeFileSync(
       META_PATH,
       JSON.stringify(
         {
-          schema: INDEX_SCHEMA,
-          books: Object.fromEntries(shas),
+          ...record,
           syncedAt: new Date().toISOString(),
           pageCount: indexed,
           dbBytes: fs.statSync(DB_PATH).size,
