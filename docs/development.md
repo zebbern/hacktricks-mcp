@@ -22,6 +22,7 @@ Requires Node.js 22.13 or newer. The index is not in git ([architecture.md](arch
 | `npm run eval` | Keyword gate: fixtures from `tests/queries.json` |
 | `npm run eval:workflow` | Agent gate: whether the skill's route finds the page for every scenario question (build first) |
 | `npm run eval:permissions` | Permissions gate: the permissions check against the whole catalog and against hand-checked cases |
+| `npm run cost` | The characters that four reads return on the built index; the README quotes them (build first) |
 | `npm run smoke` | End-to-end MCP tests over stdio against the built server: the four tools (`scripts/smoke.ts`), then inputs from outside the happy path (`scripts/smoke-edge.ts`) |
 | `npm run smoke:refresh` | End-to-end test of the background index refresh (build first) |
 | `npm run sync:skills`, `npm run sync:agents` | Regenerate the mirrored copies of the skill and of the researcher; `--check` fails on drift ([agents.md](agents.md)) |
@@ -103,6 +104,28 @@ To add a scenario, append to `tests/scenarios.json`:
 - Weight a page's headings or its first prose higher than its body: one or two questions moved, in either direction.
 - Bind questions to pages and rank the page of the closest bound question first: the closest is right for 31 of 83 situational questions, where the plain search finds 46, and it needs a source of questions for every page.
 - Name in each search hit the sections of the page where the query's words lie (the way `Xplo8E/hacktricks-mcp-server` groups its results): 350 to 530 characters for five hits, against about 800 for the outline it would save, and for two questions it named "References" and "Detection".
+
+## What a read costs
+
+`npm run cost` prints, for the built index, the characters that four reads return as an agent reads them. CI prints them for every change.
+
+- A search of five hits, for each of the 89 questions of the scenarios that names the technique.
+- A page's outline, for every page.
+- One section of a page: the one in the middle of the page by length, for every page with two sections or more.
+- A whole page: its length.
+
+The README quotes these numbers, rounded, with tokens. Run it again when the index or what a tool returns has changed, and move the README with it.
+
+Reference numbers, index of 2,952 pages at upstream `45eade3` and `49dae14`. The tokens were counted on the same reads with tiktoken's `o200k_base`; `cl100k_base` gives the same within 1 percent.
+
+| Read | Characters | Tokens |
+|---|---|---|
+| A search of five hits | 1,965 on average | 545 |
+| A page's outline | 688 median; nine pages in ten under 1,382 | 178 |
+| One section of a page | 1,300 median; nine in ten under 3,033 | 304 |
+| A whole page | 8,389 median; nine in ten under 24,980 | 1,956 |
+
+A page is 6.3 times that section in the median page, and under 2.5 times in a tenth of the pages. HackTricks text runs at 3.6 characters to a token in search results and at 4.2 to 4.3 in pages and sections, so the tokens of a later run follow from its characters.
 
 ## Edge cases
 
