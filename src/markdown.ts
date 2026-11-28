@@ -143,7 +143,8 @@ export interface SectionMatch {
  * text was often the wrong one: a page titled "Deep Learning
  * <sup>[[1]](#references)</sup>" answered a request for its "References"
  * section with the whole page, and a request for "usage" returned an earlier
- * "usage of the tool". On the index of 2026-11-28 that hid 1,802 headings.
+ * "usage of the tool". On the index of 2026-11-28, a request for a heading's
+ * own text reached another heading 1,854 times.
  */
 export function findHeading(headings: Heading[], section: string): SectionMatch {
   const needle = plainText(section);
