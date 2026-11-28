@@ -4,7 +4,7 @@ How hacktricks-mcp shows up inside agent hosts: the skill, the researcher subage
 
 ## The skill
 
-The tools tell an agent what it can call; `skills/hacktricks/SKILL.md` tells it how to use them well. It is written in the [Agent Skills](https://agentskills.io) format. When tool behaviour changes in `src/server.ts`, the skill changes with it; [tools.md](tools.md) describes the API.
+The tools tell an agent what it can call; `skills/hacktricks/SKILL.md` tells it how to use them well. It is written in the [Agent Skills](https://agentskills.io) format, which also lets the [skills CLI](https://github.com/vercel-labs/skills) install it on its own: the CLI reads `skills/*/SKILL.md` at the repository root and copies what it finds, so that folder stays where it is. It adds the skill alone, not the server or the researcher; the README has the command. When tool behaviour changes in `src/server.ts`, the skill changes with it; [tools.md](tools.md) describes the API.
 
 Every rule in it rests on a measurement. The scripted one is `npm run eval:workflow` ([development.md](development.md#evaluating-quality)). Live runs put subagents on the real server, one run per question, and are directional only.
 
