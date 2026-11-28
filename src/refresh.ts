@@ -51,7 +51,7 @@ export interface Index {
   toc: Record<string, TocNode[]>;
 }
 
-/** Open the index stored in a directory: the package's data/, or a downloaded copy. */
+/** Open the index stored in a directory: the package's data/, or a downloaded copy. The database must also answer a query, so a file that is not one fails here. */
 export function openIndex(dir: string, dbPath = path.join(dir, "hacktricks.db")): Index {
   const read = (name: string) => {
     const file = path.join(dir, name);
@@ -59,16 +59,24 @@ export function openIndex(dir: string, dbPath = path.join(dir, "hacktricks.db"))
   };
   const meta = read("meta.json");
   const toc = read("toc.json");
+  const db = openDbReadonly(dbPath);
+  try {
+    db.prepare("SELECT count(*) AS n FROM pages").get();
+  } catch (err) {
+    db.close();
+    throw err;
+  }
   return {
     dir,
-    db: openDbReadonly(dbPath),
+    db,
     meta: meta ? JSON.parse(meta) : { syncedAt: "unknown", pageCount: 0 },
     toc: toc ? JSON.parse(toc) : {},
   };
 }
 
 function cacheDir(): string {
-  if (process.env.HACKTRICKS_CACHE_DIR) return process.env.HACKTRICKS_CACHE_DIR;
+  const set = process.env.HACKTRICKS_CACHE_DIR?.trim();
+  if (set) return set;
   if (process.platform === "win32") {
     return path.join(process.env.LOCALAPPDATA ?? os.homedir(), "hacktricks-mcp", "cache");
   }
@@ -80,7 +88,9 @@ function cacheDir(): string {
 function releaseUrl(name: string): string {
   const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const repository: string = JSON.parse(fs.readFileSync(path.join(pkgRoot, "package.json"), "utf8")).repository.url;
-  const base = process.env.HACKTRICKS_INDEX_URL ?? `${repository.replace(/^git\+|\.git$/g, "")}/releases/latest/download`;
+  // An empty variable is a blank setting in a host's config, not an address.
+  const custom = process.env.HACKTRICKS_INDEX_URL?.trim();
+  const base = custom ? custom : `${repository.replace(/^git\+|\.git$/g, "")}/releases/latest/download`;
   return `${base.replace(/\/+$/, "")}/${name}`;
 }
 
@@ -169,10 +179,16 @@ export function newestCachedIndex(current: Index): Index | null {
     const newest = folders[folders.length - 1];
     if (!newest) return null;
     const index = openIndex(path.join(cache, newest));
-    if (usable(index) && index.meta.syncedAt > current.meta.syncedAt) return index;
+    // An older download is normal after a package upgrade; a damaged one is worth a line.
+    if (usable(index)) {
+      if (index.meta.syncedAt > current.meta.syncedAt) return index;
+    } else {
+      console.error(`hacktricks-mcp: ignoring the downloaded index in ${path.join(cache, newest)}: it is no longer whole`);
+    }
     index.db.close();
-  } catch {
+  } catch (err) {
     // an unreadable cache is no reason not to start on the bundled index
+    console.error(`hacktricks-mcp: ignoring the downloaded index in the cache: ${(err as Error).message}`);
   }
   return null;
 }

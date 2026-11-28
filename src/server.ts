@@ -23,22 +23,49 @@ import type { TocNode } from "./toc.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DATA_DIR = path.join(PKG_ROOT, "data");
-const OFFLINE = ["1", "true"].includes((process.env.HACKTRICKS_OFFLINE ?? "").toLowerCase());
+/** The value of an environment variable, or undefined when it is empty or blank: an empty setting means "not set". */
+const env = (name: string): string | undefined => {
+  const value = process.env[name]?.trim();
+  return value ? value : undefined;
+};
+const OFFLINE = ["1", "true"].includes((env("HACKTRICKS_OFFLINE") ?? "").toLowerCase());
+const DB_PATH = env("HACKTRICKS_DB");
 
 // The bundled index answers from the first call on. One that an earlier run
 // downloaded is used right away if it is newer, and a newer one still is
 // swapped in by the background check in main(); every tool reads this variable
 // at call time.
-let index = openIndex(DATA_DIR, process.env.HACKTRICKS_DB);
-const downloaded = process.env.HACKTRICKS_DB ? null : newestCachedIndex(index);
-if (downloaded) {
-  index.db.close();
-  index = downloaded;
+let index: Index;
+try {
+  const bundled = openIndex(DATA_DIR, DB_PATH);
+  const downloaded = DB_PATH ? null : newestCachedIndex(bundled);
+  if (downloaded) bundled.db.close();
+  index = downloaded ?? bundled;
+} catch (err) {
+  const file = DB_PATH ?? path.join(DATA_DIR, "hacktricks.db");
+  // Written straight to stderr: this process exits at once, and a pipe write may still be pending when it does.
+  fs.writeSync(
+    2,
+    `hacktricks-mcp: cannot start, the index at ${file} is not readable: ${(err as Error).message}` +
+      (DB_PATH
+        ? " HACKTRICKS_DB must point at a HackTricks index (the hacktricks.db of a package or release) or be left unset."
+        : " Reinstall the package.") +
+      "\n",
+  );
+  process.exit(1);
 }
 
 const pkg = JSON.parse(fs.readFileSync(path.join(PKG_ROOT, "package.json"), "utf8"));
 const count = (n: number) => n.toLocaleString("en-US");
 const pages = (n: number) => `${count(n)} ${n === 1 ? "page" : "pages"}`;
+/** An input as a message quotes it: long enough to recognise, short enough to read, with its length when cut. */
+const shown = (s: string, max = 120): string => (s.length > max ? `${s.slice(0, max)}… (${s.length.toLocaleString("en-US")} characters)` : s);
+
+// Longer than this is pasted text, not a path, a category or a permission: it
+// is refused at the schema instead of being echoed back or matched against.
+const MAX_PATH = 1_000;
+const MAX_CATEGORY = 200;
+const MAX_PERMISSION = 500;
 
 const server = new McpServer(
   { name: "hacktricks-mcp", version: pkg.version },
@@ -247,7 +274,7 @@ server.registerTool(
           content: [
             {
               type: "text",
-              text: `Section "${section}" not found in "${page.title}". Available sections:\n${outline.join("\n")}`,
+              text: `Section "${shown(section)}" not found in "${page.title}". Available sections:\n${outline.join("\n")}`,
             },
           ],
           isError: true,
@@ -384,10 +411,10 @@ server.registerTool(
       const lines = tocMatching(category.toLowerCase());
       if (lines.length > TOC_MAX_LINES) {
         tree = lines.slice(0, TOC_MAX_LINES).join("\n");
-        text = `Entries matching "${category}" (first ${TOC_MAX_LINES} of ${lines.length} lines; use a more specific filter):\n${tree}`;
+        text = `Entries matching "${shown(category)}" (first ${TOC_MAX_LINES} of ${lines.length} lines; use a more specific filter):\n${tree}`;
       } else {
         tree = lines.length > 0 ? lines.join("\n") : "(none)";
-        text = `Entries matching "${category}":\n${tree}`;
+        text = `Entries matching "${shown(category)}":\n${tree}`;
       }
       text += `\n\nCategories:\n${catText}`;
     }
@@ -535,7 +562,7 @@ async function main() {
   console.error("hacktricks-mcp running on stdio");
 
   // A custom database path is an explicit choice of index, so leave it alone.
-  if (!OFFLINE && !process.env.HACKTRICKS_DB) {
+  if (!OFFLINE && !DB_PATH) {
     refreshInBackground(
       () => index,
       (next) => {
