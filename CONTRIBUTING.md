@@ -28,7 +28,7 @@ Exception: `kimi-plugin/kimi.plugin.json` is versioned by the Kimi marketplace t
 
 ### 3. The index is generated
 
-`data/` is produced by `npm run sync` from the upstream HackTricks and HackTricks Cloud repositories. Only `data/meta.json` is tracked, as the record of which upstream commits the last release holds. Run `npm run sync` once after cloning to build the index (it needs the network), and again when upstream has moved. Do not hand-edit anything in `data/`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the upstream commits or the index layout change; manual syncs happen via `npm run sync`.
+`data/` is produced by `npm run sync` from the upstream HackTricks and HackTricks Cloud repositories. Only `data/upstream.json` is tracked, as the record of which upstream commits and index layout the last release holds; it carries no time, so a local sync leaves it unchanged. Run `npm run sync` once after cloning to build the index (it needs the network), and again when upstream has moved. Do not hand-edit anything in `data/`. The sync workflow re-runs every 3rd day and publishes a patch release whenever the upstream commits or the index layout change; manual syncs happen via `npm run sync`.
 
 When a change alters what the indexer writes (a column, a title, a category, a link), bump `INDEX_SCHEMA` in `src/db.ts`. The sync script rebuilds on a different number even if upstream has not moved, and a running server refuses to download an index of another layout.
 

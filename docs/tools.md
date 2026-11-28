@@ -81,7 +81,7 @@ Reads one page from the index.
 - Without `section`, returns the full cleaned page. Text comes in slices of 20,000 characters: a slice that is cut appends the heading outline, so the caller can pick a section, and ends with `offset=<n>` for the rest. A section without subsections that is longer than 20,000 characters is read the same way, slice by slice.
 - Unknown `section` returns an error listing the available headings, so the agent can self-correct.
 - A path is matched as it is, then as the whole ending of a path (with or without `.md`), then as a piece that exactly one page has. A piece that several pages have is not read as one of them. `"kerberos"` lies in six paths, so the answer is an error that lists them, each once, with the number of all; a piece that lies in at least half of the paths (`"e"`) names none, and the answer says how common it is. A path that names no page says so.
-- Content is pre-cleaned at index time: GitBook hint banners, include directives and badge images are removed.
+- Content is cleaned at index time, outside code blocks only. The training banner, the link and tab scaffolding and HTML comments are removed, and nothing else: a warning written as a hint block and the label of a tab stay as text. A code block is stored as it is, because the pages on injection hold `{{ ... }}`, `{% ... %}` and `<!-- -->` that look like templating and are payloads.
 
 **Returns** (structured): `title`, `book`, `path`, `url`, `wikiUrl`, `outline`, `content`, `truncated`, `nextOffset` (where a cut text continues; absent when everything was returned).
 

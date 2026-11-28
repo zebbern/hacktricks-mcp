@@ -14,10 +14,11 @@ scripts/sync.ts
   2. skip if data/meta.json already matches those SHAs and the index layout
   3. download + extract each tarball
   4. parse each src/SUMMARY.md -> toc.json + page metadata
-  5. clean markdown (src/markdown.ts)
+  5. clean the markdown outside code blocks (src/markdown.ts); an index is not
+     written when that took a heading, a code fence or a payload line
   6. build one SQLite FTS5 index, each page tagged with its book (src/db.ts)
   7. read the Cloud book's permission lists and escalation catalog into tables (src/permissions.ts)
-  8. write data/{hacktricks.db, toc.json, meta.json}
+  8. write data/{hacktricks.db, toc.json, meta.json, upstream.json}
         |
         v
 dist/server.js (MCP stdio server)
@@ -34,10 +35,13 @@ The books are listed in `src/books.ts`: id, title, GitHub repository and public 
 | `data/hacktricks.db` | SQLite DB: one `pages` table + `pages_fts` FTS5 virtual table for all books, and the permission tables | rebuilt by `npm run sync` |
 | `data/toc.json` | Each book's table of contents tree, keyed by book id | parsed from each upstream SUMMARY.md |
 | `data/meta.json` | `schema`, `books` (upstream SHA per book), `syncedAt`, `pageCount`, `dbBytes` | written by sync |
+| `data/upstream.json` | `schema` and `books` alone, so that a local sync leaves it unchanged | written by sync; the one file of `data/` that is tracked |
 
-`meta.json` serves three readers. The sync script compares `books` with upstream to know whether to rebuild, and rebuilds regardless when `schema` differs from `INDEX_SCHEMA` in `src/db.ts`. The server puts `pageCount` and `syncedAt` into its instructions and into the first line of `hacktricks_get_toc`. The runtime refresh reads `schema` and `syncedAt` from a release's copy to decide whether it can use that index and whether it is newer.
+`meta.json` serves three readers. The sync script compares `books` with upstream to know whether to rebuild, and rebuilds regardless when `schema` differs from `INDEX_SCHEMA` in `src/db.ts`. The server puts `pageCount` and `syncedAt` into its instructions and into the first line of `hacktricks_get_toc`. The runtime refresh reads `schema` and `syncedAt` from a release's copy to decide whether it can use that index and whether it is newer. `upstream.json` serves the sync workflow, which compares it before and after a rebuild to tell whether the index changed.
 
 Bump `INDEX_SCHEMA` whenever a rebuild must reach every index although upstream has not moved: a layout change, or a change in how pages become rows (`src/db.ts`, `src/toc.ts`, `src/markdown.ts`, `src/permissions.ts`).
+
+The cleaner removes HackTricks' templating and HTML comments from the text outside code blocks, and touches nothing inside one. It used to strip any line that looked like a template directive and any `<!-- ... -->`, wherever it stood. That took 176 payload lines off 15 pages, among them two on template injection and the polyglot cheatsheet, which was left with 927 of its 10,277 characters; it also dropped ten warnings written as hint blocks and the labels of 516 tabs. Measured against the raw sources on 2026-11-28, the index now holds every heading of both books. The sync script guards that from now on: it compares each raw page with its cleaned copy and refuses to write an index when cleaning took a heading outside code, a code fence or a line of prose holding a template expression.
 
 ## Table of contents parsing
 
@@ -154,10 +158,10 @@ The catalog does not describe everything the book does (`Microsoft.Authorization
 
 1. `npm run sync` rebuilds the index. Locally the script skips when the index is already built for the same upstream commits; the workflow starts without one.
 2. `npm run eval`, `npm run eval:workflow` and `npm run eval:permissions` (the three quality gates, see below)
-3. when the layout number or an upstream commit in `data/meta.json` differs from the one on record, commits `data/meta.json` with both upstream SHAs in the message and tags `index-YYYY.MM.DD-<sha>-<sha>`
+3. when the layout number or an upstream commit in `data/upstream.json` differs from the one on record, commits `data/upstream.json` with both upstream SHAs in the message and tags `index-YYYY.MM.DD-<sha>-<sha>`
 4. on a change, bumps the patch version (`npm version patch`, which also stamps the manifests and tags `vX.Y.Z`), pushes it and dispatches `release.yml` on that tag
 
-The index itself is not kept in git: every install path resolves to the npm package or to a release asset. Only `data/meta.json` is, as the record of what was released, and step 3 compares it with the record before the rebuild. Step 4 closes the gap to users: one sync, one patch release. The dispatch is explicit because a tag pushed with `GITHUB_TOKEN` does not fire the `push` trigger in `release.yml`; `workflow_dispatch` always does.
+The index itself is not kept in git: every install path resolves to the npm package or to a release asset. Only `data/upstream.json` is, as the record of what was released; it carries no time, so a local sync leaves it as it is, and step 3 compares it with the record before the rebuild. Step 4 closes the gap to users: one sync, one patch release. The dispatch is explicit because a tag pushed with `GITHUB_TOKEN` does not fire the `push` trigger in `release.yml`; `workflow_dispatch` always does.
 
 Because the record is compared, quiet weeks produce zero commits, zero releases and zero noise.
 
@@ -215,4 +219,4 @@ Two end-to-end tests run in the same places, `npm run smoke`: `scripts/smoke.ts`
 - **One index for both books over one index per book**: most questions do not say which book answers them (`privilege escalation`, `docker`, `github actions`), and one search must cover both. The `book` column costs nothing and lets a caller narrow by book.
 - **A dedicated check for cloud permissions over search**: a question such as "what can I do with `iam:PassRole` and `lambda:CreateFunction`" asks for data the book keeps in structured form: the rating of each permission and the techniques they enable. In the evaluation the check finds the page for all 6 permission questions, with the section to read. The plain search has an expected page among its results for all 6 as well and reads less, so the check earns its first place by what it adds, which the pages do not hold in one place.
 - **Tarball over git clone in sync**: two HTTP requests, no history, no auth.
-- **Not keeping the index in git**: every install path resolves to the npm package or to a release asset, so a committed index served local development only. It cost 23 MB of history per sync once the Cloud book made it 64 MB, and a 23 MB download for a plugin install that copies it without using it. `data/meta.json` stays tracked as the record of what was released, `npm run sync` builds the index after a clone, and the repository archive is 0.15 MB.
+- **Not keeping the index in git**: every install path resolves to the npm package or to a release asset, so a committed index served local development only. It cost 23 MB of history per sync once the Cloud book made it 64 MB, and a 23 MB download for a plugin install that copies it without using it. `data/upstream.json` stays tracked as the record of what was released, `npm run sync` builds the index after a clone, and the repository archive is 0.15 MB.

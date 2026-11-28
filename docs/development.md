@@ -33,7 +33,7 @@ rm data/hacktricks.db   # force a rebuild even if the upstream SHAs are unchange
 npm run sync && npm run build && npm run eval && npm run eval:workflow && npm run eval:permissions && npm run smoke && npm run smoke:refresh
 ```
 
-The sync skips the rebuild when `data/meta.json` carries the same upstream SHAs and the same `schema` as `INDEX_SCHEMA` in `src/db.ts`. Bump that constant when your change alters what the indexer writes, so CI, the release workflow and every clone rebuild too.
+The sync skips the rebuild when `data/meta.json` carries the same upstream SHAs and the same `schema` as `INDEX_SCHEMA` in `src/db.ts`. Bump that constant when your change alters what the indexer writes, so CI, the release workflow and every clone rebuild too; to force one rebuild by hand, remove `data/hacktricks.db`, as the loop above does. The sync also refuses to write an index when cleaning took more than scaffolding out of a page, a heading outside code, a code fence or a line holding a template expression ([architecture.md](architecture.md#data-files)); change `src/markdown.ts` and not that check.
 
 ## Evaluating quality
 
@@ -56,16 +56,16 @@ npm run eval:workflow -- --misses           # what the skill's route does not fi
 
 The steps are `hacktricks_cloud_permissions` for a question that names cloud permissions, a search with the question (`limit` 5), a search with the technique's name (the `named` form of the question), and `hacktricks_get_toc` with the cloud's word (`K8s`, `AWS - `) or with the rarest topic words of the question. A question is found when an expected page is among the results of a step. The last route of each table is what the skill tells agents to do; the run fails when that route finds the page for less than 90% of the questions, asked either way.
 
-Reference numbers, index of 2,952 pages at upstream `679550a` and `49dae14` (2026-11-28; the same numbers were measured on `2856dd9`). Calls and characters are averages over all 89 questions, so the permissions check, which answers 6 of them, comes to 5,038 characters a question. A query has been split at the separators of a permission or of a path since 0.3.2, which is how the pages are indexed; before that, with `iam:PassRole` searched as one word, the two "search only" rows found 80 and 48 of 89:
+Reference numbers, index of 2,952 pages at upstream `ad8795c` and `49dae14` (2026-11-28, cleaned so that code blocks stay whole; the same pages were found on `679550a` and `2856dd9`). Calls and characters are averages over all 89 questions, so the permissions check, which answers 6 of them, comes to 5,038 characters a question. A query has been split at the separators of a permission or of a path since 0.3.2, which is how the pages are indexed; before that, with `iam:PassRole` searched as one word, the two "search only" rows found 80 and 48 of 89:
 
 | Route | Found | Calls | Characters read |
 |---|---|---|---|
 | The question names the technique: permissions check alone (6 of the 89 questions name permissions) | 6 of 89 | 0.08 | 345 |
-| The question names the technique: search only | 85 of 89 | 1.00 | 1,966 |
+| The question names the technique: search only | 85 of 89 | 1.00 | 1,965 |
 | The question names the technique: the skill's route | 89 of 89 | 1.06 | 2,461 |
 | The question only describes the situation: permissions check alone | 6 of 89 | 0.07 | 340 |
-| The question only describes the situation: search as typed only | 51 of 89 | 1.00 | 1,930 |
-| The same: as typed, then with the technique's name | 87 of 89 | 1.43 | 2,768 |
+| The question only describes the situation: search as typed only | 51 of 89 | 1.00 | 1,932 |
+| The same: as typed, then with the technique's name | 87 of 89 | 1.43 | 2,770 |
 | The same: name first, then as typed | 87 of 89 | 1.04 | 2,054 |
 | The same: the skill's route | 89 of 89 | 1.09 | 2,461 |
 
@@ -141,7 +141,7 @@ npm version patch -m "chore: release v%s"   # or minor / major
 git push --follow-tags
 ```
 
-Run `npm run sync` first, and commit `data/meta.json` if it changed. The release job rebuilds the index in its own runner and publishes that, so a record that is behind upstream would ship a newer index than the commit holds, and the next sync would publish a second patch for the same content.
+Run `npm run sync` first, and commit `data/upstream.json` if it changed. The release job rebuilds the index in its own runner and publishes that, so a record that is behind upstream would ship a newer index than the commit holds, and the next sync would publish a second patch for the same content.
 
 `npm version` automatically runs `scripts/version-sync.mjs` (npm lifecycle hook), which stamps the new version into `server.json`, the three plugin manifests and the marketplace entry, and stages them, so the version commit is always consistent. `kimi-plugin/kimi.plugin.json` is excluded on purpose: the Kimi marketplace manages its own numbering.
 
