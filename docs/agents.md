@@ -86,7 +86,7 @@ Kimi is the exception: a Kimi plugin installs as a self-contained directory and 
 
 This is the layout the hosts share: skills live in `skills/<name>/SKILL.md` at the plugin root ([Agent Skills](https://agentskills.io)), and the plugin root may hold several hosts' manifests side by side.
 
-**Always launch with an explicit tag.** Every MCP config here runs `npx -y @zebbern/hacktricks-mcp@latest`, and the README quick start does the same. Given a bare package name, npx prefers a package of the same name in the project it is started from, so a session opened inside this repository tries to run the local copy and fails with `'hacktricks-mcp' is not recognized`. The tag makes npx resolve the published package instead, and it still picks up each new release on launch.
+**Always launch with an explicit tag.** Every MCP config here runs `npx -y @zebbern/hacktricks-mcp@latest`, and the README quick start does the same. Given a bare package name, npx prefers a package of the same name in the project it is started from, so a session opened inside this repository tries to run the local copy and fails with `'hacktricks-mcp' is not recognized`. The tag makes npx resolve the published package instead, and it still picks up each new release on launch. A server added by hand to a host's own configuration needs the tag as well: without it the server works from any other folder and fails only in a session opened inside this repository, which hides the cause.
 
 **The repo is its own marketplace.** `.claude-plugin/marketplace.json` lists the plugin with `"source": "./"`. Claude Code, ZCode and Codex all read that file, so one catalog serves every host:
 
@@ -97,6 +97,8 @@ This is the layout the hosts share: skills live in `skills/<name>/SKILL.md` at t
 How ZCode gets there, checked against its own installer on 2026-11-28: it takes `owner/repo` as a public GitHub repository, downloads it as one archive, reads `.claude-plugin/marketplace.json` at the root, resolves the entry's `"./"` to that root, and reads `.zcode-plugin/plugin.json` there. The archive must declare no Git submodules or LFS filters. It was about 23 MB while the index was tracked, which a plugin install copied without using it; since the index left git it is 0.15 MB.
 
 When bumping versions, the hook stamps `server.json`, the three plugin manifests and the marketplace entry. There is no extra code to maintain.
+
+**The icon.** `.claude-plugin/icon.png` is drawn by `scripts/make-icon.mjs`: a terminal prompt on a dark square, none of HackTricks' own artwork. To change it, change the shapes or the colours in that script and run it. Claude Code reads the file from that place. ZCode and Kimi take an HTTPS address instead, so the marketplace entry's `icon` and the Kimi manifest's `iconUrl` point at the published file on `main`. Claude Code's validator reports `icon` on a marketplace entry as a field it does not know and ignores; that note is expected.
 
 ## Claude Desktop / Cursor / generic MCP
 

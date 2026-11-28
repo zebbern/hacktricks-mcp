@@ -20,7 +20,7 @@
     "longDescription": "Search and read HackTricks and HackTricks Cloud offline, with a cloud permissions check: pentesting, privilege escalation, web exploitation, Active Directory, AWS, GCP, Azure, Kubernetes and CI/CD, synced every 3 days.",
     "developerName": "zebbern",
     "websiteURL": "https://github.com/zebbern/hacktricks-mcp",
-    "iconUrl": "",
+    "iconUrl": "https://raw.githubusercontent.com/zebbern/hacktricks-mcp/main/.claude-plugin/icon.png",
     "category": "PRODUCTIVITY",
     "defaultLocale": "en-US",
     "locales": "./locales/",
