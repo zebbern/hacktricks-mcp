@@ -55,7 +55,7 @@ npm run eval:workflow -- --misses           # what the skill's route does not fi
 
 The steps are `hacktricks_cloud_permissions` for a question that names cloud permissions, a search with the question (`limit` 5), a search with the technique's name (the `named` form of the question), and `hacktricks_get_toc` with the cloud's word (`K8s`, `AWS - `) or with the rarest topic words of the question. A question is found when an expected page is among the results of a step. The last route of each table is what the skill tells agents to do; the run fails when that route finds the page for less than 90% of the questions, asked either way.
 
-Reference numbers, index of 2,952 pages at upstream `d2a6bf0` and `49dae14` (2026-11-27; the same on the previous main-book commit):
+Reference numbers, index of 2,952 pages at upstream `2856dd9` and `49dae14` (2026-11-28; the same pages found on the three main-book commits before it):
 
 | Route | Found | Calls | Characters read |
 |---|---|---|---|
@@ -63,8 +63,8 @@ Reference numbers, index of 2,952 pages at upstream `d2a6bf0` and `49dae14` (202
 | The question names the technique: search only | 80 of 89 | 1.00 | 1,953 |
 | The question names the technique: the skill's route | 89 of 89 | 1.06 | 2,461 |
 | The question only describes the situation: permissions check alone | 6 of 89 | 0.07 | 340 |
-| The question only describes the situation: search as typed only | 48 of 89 | 1.00 | 1,930 |
-| The same: as typed, then with the technique's name | 82 of 89 | 1.46 | 2,829 |
+| The question only describes the situation: search as typed only | 48 of 89 | 1.00 | 1,929 |
+| The same: as typed, then with the technique's name | 82 of 89 | 1.46 | 2,828 |
 | The same: name first, then as typed | 82 of 89 | 1.10 | 2,152 |
 | The same: the skill's route | 89 of 89 | 1.09 | 2,461 |
 

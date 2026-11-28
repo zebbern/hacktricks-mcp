@@ -597,11 +597,6 @@
      "children": []
     },
     {
-     "title": "Keras Model Deserialization Rce And Gadget Hunting",
-     "path": "generic-methodologies-and-resources/python/keras-model-deserialization-rce-and-gadget-hunting.md",
-     "children": []
-    },
-    {
      "title": "Python Internal Read Gadgets",
      "path": "generic-methodologies-and-resources/python/python-internal-read-gadgets.md",
      "children": []
@@ -5942,7 +5937,13 @@
     {
      "title": "AI Models RCE",
      "path": "AI/AI-Models-RCE.md",
-     "children": []
+     "children": [
+      {
+       "title": "Keras Model Deserialization RCE and Gadget Hunting",
+       "path": "AI/keras-model-deserialization-rce-and-gadget-hunting.md",
+       "children": []
+      }
+     ]
     },
     {
      "title": "KYC Bypass Using AI",
