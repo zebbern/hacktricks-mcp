@@ -253,22 +253,40 @@ function evaluate(
 
 // --- matching names ------------------------------------------------------------------
 
-const patterns = new Map<string, RegExp>();
-
-/** `*` and `?` as IAM and Azure use them. */
-function patternOf(grant: string, ignoreCase: boolean): RegExp {
-  const key = `${ignoreCase ? "i" : "s"}:${grant}`;
-  let pattern = patterns.get(key);
-  if (!pattern) {
-    pattern = new RegExp(`^${grant.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")}$`, ignoreCase ? "i" : "");
-    patterns.set(key, pattern);
-  }
-  return pattern;
-}
-
-/** Does a held permission cover a required one? `*` and `?` are wildcards, as IAM and Azure use them. */
+/**
+ * Does a held permission cover a required one? `*` stands for any run of
+ * characters and `?` for any single one, as IAM and Azure use them.
+ *
+ * The two strings are walked with the last `*` remembered to fall back on,
+ * which takes time in proportion to their lengths multiplied. The same pattern
+ * as a regular expression is not an option: with "?" as "." and "*" as ".*" the
+ * engine backtracks through every way of sharing the characters between them,
+ * and compiling one fails for a long grant.
+ */
 export function covers(grant: string, need: string, provider: Provider): boolean {
   const ignoreCase = IGNORE_CASE[provider];
-  if (!grant.includes("*") && !grant.includes("?")) return ignoreCase ? grant.toLowerCase() === need.toLowerCase() : grant === need;
-  return patternOf(grant, ignoreCase).test(need);
+  const pattern = ignoreCase ? grant.toLowerCase() : grant;
+  const name = ignoreCase ? need.toLowerCase() : need;
+  let p = 0; // the next character of the pattern
+  let n = 0; // the next character of the name
+  let star = -1; // the last `*` the match may go back to
+  let taken = 0; // how much of the name that `*` has taken so far
+  while (n < name.length) {
+    if (p < pattern.length && (pattern[p] === "?" || pattern[p] === name[n])) {
+      p++;
+      n++;
+    } else if (p < pattern.length && pattern[p] === "*") {
+      star = p++;
+      taken = n;
+    } else if (star >= 0) {
+      // Let that `*` take one character more, then continue after it.
+      p = star + 1;
+      n = ++taken;
+    } else {
+      return false;
+    }
+  }
+  // What is left of the pattern must be stars only.
+  while (p < pattern.length && pattern[p] === "*") p++;
+  return p === pattern.length;
 }
