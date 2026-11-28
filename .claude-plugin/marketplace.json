@@ -11,7 +11,7 @@
       "displayName": "HackTricks",
       "source": "./",
       "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki and HackTricks Cloud (AWS, GCP, Azure, Kubernetes, CI/CD), plus a cloud permissions check. Synced every 3 days.",
-      "version": "0.3.4",
+      "version": "0.3.5",
       "category": "developer-tools"
     }
   ]
