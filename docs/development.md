@@ -106,7 +106,7 @@ To add a scenario, append to `tests/scenarios.json`:
 
 ## Edge cases
 
-`npm run smoke` runs two end-to-end tests over stdio against the built server. `scripts/smoke.ts` calls the four tools. `scripts/smoke-edge.ts` sends what an agent or a host can send by mistake or on purpose: a page path that names several pages, a permission or a path in a query, pasted text and oversized fields, permissions glued into one entry or malformed, a blank environment setting, an index that cannot be read and a Node.js that is too old. It also pins the cleaner's rules and the lookup of a section by its exact name. Every check is the answer to an input that an earlier release got wrong. The input rules they pin down are in [tools.md](tools.md#input-limits).
+`npm run smoke` runs two end-to-end tests over stdio against the built server. `scripts/smoke.ts` calls the four tools. `scripts/smoke-edge.ts` sends what an agent or a host can send by mistake or on purpose: a page path that names several pages, a permission or a path in a query, pasted text and oversized fields, permissions glued into one entry or malformed, a blank environment setting, an index that cannot be read and a Node.js that is too old. It also pins the cleaner's rules, the lookup of a section by its exact name, and that the index a server starts on leaves the package's files replaceable, which a server on Windows once did not. Every check is the answer to a defect an earlier release had. The input rules they pin down are in [tools.md](tools.md#input-limits).
 
 To add a check, put it in a `check(...)` block in `scripts/smoke-edge.ts`. Assert on what the answer says, not on counts that a new index would change.
 
@@ -140,10 +140,10 @@ The gates run inside the repository on CI's Node version, so they miss three thi
 ```bash
 npm pack --pack-destination /tmp/ht-pack
 npm install --prefix /tmp/ht-pack /tmp/ht-pack/zebbern-hacktricks-mcp-*.tgz
-(cd /tmp && HACKTRICKS_OFFLINE=1 /tmp/ht-pack/node_modules/.bin/hacktricks-mcp </dev/null)
+(cd /tmp && HACKTRICKS_OFFLINE=1 HACKTRICKS_CACHE_DIR=/tmp/ht-pack/cache /tmp/ht-pack/node_modules/.bin/hacktricks-mcp </dev/null)
 ```
 
-The last command must print `hacktricks-mcp running on stdio` and exit 0. It packs into `/tmp` so that no tarball is left in the repository. Finish with `mcp-publisher validate`, which checks `server.json` against the registry without publishing ([agents.md](agents.md#mcp-registry)).
+The last command must print `hacktricks-mcp running on stdio` and exit 0. It packs into `/tmp` so that no tarball is left in the repository, and starts with a scratch cache because on Windows a server copies its index into its cache at startup. Finish with `mcp-publisher validate`, which checks `server.json` against the registry without publishing ([agents.md](agents.md#mcp-registry)).
 
 ### What ships in the package
 

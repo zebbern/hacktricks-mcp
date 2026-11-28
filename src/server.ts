@@ -18,7 +18,7 @@ import { lookupPage, searchPages, searchTerms, listCategories, MAX_TERMS, type P
 import { findHeading, sectionText, extractCodeBlocks, withoutFootnotes, plainText, sectionLengths, type CodeBlock, type Heading } from "./markdown.js";
 import { checkPermissions, type EscalationMatch } from "./permission-check.js";
 import { PROVIDERS, SEVERITIES, type Severity } from "./permissions.js";
-import { newestCachedIndex, openIndex, refreshInBackground, type Index } from "./refresh.js";
+import { refreshInBackground, startupIndex, type Index } from "./refresh.js";
 import type { TocNode } from "./toc.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,13 +34,11 @@ const DB_PATH = env("HACKTRICKS_DB");
 // The bundled index answers from the first call on. One that an earlier run
 // downloaded is used right away if it is newer, and a newer one still is
 // swapped in by the background check in main(); every tool reads this variable
-// at call time.
+// at call time. On Windows the bundled index is served from a copy in the
+// cache, so that no file of the package stays open (src/refresh.ts).
 let index: Index;
 try {
-  const bundled = openIndex(DATA_DIR, DB_PATH);
-  const downloaded = DB_PATH ? null : newestCachedIndex(bundled);
-  if (downloaded) bundled.db.close();
-  index = downloaded ?? bundled;
+  index = startupIndex(DATA_DIR, DB_PATH);
 } catch (err) {
   const file = DB_PATH ?? path.join(DATA_DIR, "hacktricks.db");
   // Written straight to stderr: this process exits at once, and a pipe write may still be pending when it does.

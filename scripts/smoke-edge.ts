@@ -3,7 +3,9 @@
  * pasted text, oversized fields, malformed permissions and blank environment
  * settings. Each once made the built server answer with something wrong or
  * unreadable, so the answer is asserted on here. The rules are in docs/tools.md.
- * The last check is on the page cleaner, which once deleted payloads.
+ * The last two checks are on the page cleaner, which once deleted payloads,
+ * and on the index a server starts on, which once kept npx from updating the
+ * package on Windows.
  *
  * Every check runs even after one fails, and the test fails if any did.
  */
@@ -13,10 +15,14 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { INDEX_SCHEMA } from "../src/db.js";
 import { cleanMarkdown, extractCodeBlocks, extractOutline, extractSection, findHeading, withoutFootnotes } from "../src/markdown.js";
+import { startupIndex } from "../src/refresh.js";
+import { scratchCache } from "./scratch-cache.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER = path.join(PKG_ROOT, "dist", "server.js");
+const cache = scratchCache("smoke-edge");
 const S = "hacktricks_search";
 const P = "hacktricks_get_page";
 const C = "hacktricks_cloud_permissions";
@@ -44,13 +50,13 @@ async function check(label: string, run: () => Promise<unknown>): Promise<void> 
   }
 }
 
-/** A server started with `env` added to this process's environment. What it prints on stderr is kept, and shown unless it is the usual start-up line. */
+/** A server started with `env` added to this process's environment, on a scratch cache. What it prints on stderr is kept, and shown unless it is the usual start-up line. */
 async function start(env: Record<string, string>) {
   const transport = new StdioClientTransport({
     command: process.execPath,
     args: [SERVER],
     stderr: "pipe",
-    env: { ...process.env, HACKTRICKS_OFFLINE: "1", ...env } as Record<string, string>,
+    env: { ...process.env, HACKTRICKS_OFFLINE: "1", HACKTRICKS_CACHE_DIR: cache, ...env } as Record<string, string>,
   });
   let stderr = "";
   transport.stderr?.on("data", (d: Buffer) => {
@@ -98,11 +104,22 @@ async function main() {
   });
 
   // Blank settings mean "not set": the server starts on the bundled index.
+  // With the cache setting blank it uses its default cache folder, which lies
+  // under one of HOME, LOCALAPPDATA and XDG_CACHE_HOME by platform, so those
+  // point into scratch for this one server.
   await check("blank environment settings are taken as unset", async () => {
-    const blank = await start({ HACKTRICKS_DB: "", HACKTRICKS_INDEX_URL: "   ", HACKTRICKS_CACHE_DIR: "" });
+    const home = scratchCache("smoke-edge-home");
+    const blank = await start({ HACKTRICKS_DB: "", HACKTRICKS_INDEX_URL: "   ", HACKTRICKS_CACHE_DIR: "", LOCALAPPDATA: home, XDG_CACHE_HOME: home, HOME: home });
     await blank.client.connect(blank.transport);
     const { tools } = await blank.client.listTools();
     expect(tools.length === 4, "a blank HACKTRICKS_DB or HACKTRICKS_INDEX_URL kept the tools from being listed", JSON.stringify(tools.map((t) => t.name)));
+    // Where Windows puts its copy of the bundled index says which cache folder was used.
+    const defaults = ["hacktricks-mcp/cache", "Library/Caches/hacktricks-mcp", ".cache/hacktricks-mcp"].filter((p) => fs.existsSync(path.join(home, p)));
+    expect(
+      process.platform !== "win32" || (defaults.length === 1 && fs.readdirSync(path.join(home, defaults[0])).some((name) => name.startsWith("index-"))),
+      "with HACKTRICKS_CACHE_DIR blank, the server did not start on its default cache folder",
+      `${home}: ${fs.readdirSync(home).join(", ")}`,
+    );
     await blank.client.close();
   });
 
@@ -311,6 +328,75 @@ async function main() {
     expect(!exact.isError && !text(exact).includes("(no section is named exactly"), "a section read by its exact name is treated as a partial one", text(exact).slice(0, 300));
     const commands = await call(P, { path: "pentesting-web/pocs-and-polygloths-cheatsheet/README.md", codeOnly: true });
     expect(!commands.isError && text(commands).includes("```bash\n"), "code blocks come back without their language", text(commands).slice(0, 300));
+  });
+
+  // Windows does not let a file that is open be replaced. A server that
+  // served the package's own index kept npx from updating the package for as
+  // long as it ran: npm stopped with EBUSY on data/hacktricks.db, so the next
+  // session could not start until the first was closed. Checked on a copy of
+  // the package's data folder and on a scratch cache, as a server uses both.
+  await check("the index a server starts on leaves the package's files replaceable", async () => {
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), "hacktricks-smoke-edge-"));
+    const data = path.join(folder, "data");
+    const files = ["meta.json", "toc.json", "hacktricks.db"];
+    fs.mkdirSync(data);
+    for (const name of files) fs.copyFileSync(path.join(PKG_ROOT, "data", name), path.join(data, name));
+    const meta = JSON.parse(fs.readFileSync(path.join(data, "meta.json"), "utf8"));
+    const DAY = 86_400_000;
+    const at = (offset: number) => new Date(Date.parse(meta.syncedAt) + offset).toISOString();
+    const cached = (offset: number) => path.join(folder, "cache", `index-${INDEX_SCHEMA}-${at(offset).replace(/\D/g, "")}`);
+    /** A cached index, as a download or a copy leaves one. */
+    const download = (offset: number) => {
+      fs.mkdirSync(cached(offset), { recursive: true });
+      for (const name of files) fs.copyFileSync(path.join(data, name), path.join(cached(offset), name));
+      fs.writeFileSync(path.join(cached(offset), "meta.json"), JSON.stringify({ ...meta, syncedAt: at(offset) }));
+    };
+    const was = process.env.HACKTRICKS_CACHE_DIR;
+    process.env.HACKTRICKS_CACHE_DIR = path.join(folder, "cache");
+    try {
+      download(-DAY); // left behind by an earlier package
+      const index = startupIndex(data);
+      const fromCopy = path.resolve(index.dir) === path.resolve(cached(0));
+      let moved = false;
+      try {
+        fs.renameSync(path.join(data, "hacktricks.db"), path.join(data, "moved.db"));
+        moved = true;
+      } catch {
+        // still in use
+      } finally {
+        if (moved) fs.renameSync(path.join(data, "moved.db"), path.join(data, "hacktricks.db"));
+      }
+      const pages = (index.db.prepare("SELECT count(*) AS n FROM pages").get() as { n: number }).n;
+      index.db.close();
+      expect(pages === meta.pageCount, "the index a server starts on does not hold every page of the package's", `${pages} of ${meta.pageCount}, from ${index.dir}`);
+      expect(moved, "the package's database cannot be replaced while a server holds its index open", `served from ${index.dir}`);
+      expect(
+        fromCopy === (process.platform === "win32"),
+        "the bundled index is served from a copy in the cache on Windows, and from the package elsewhere",
+        `served from ${index.dir}`,
+      );
+      expect(!fs.existsSync(cached(-DAY)), "an index older than the one a server starts on stayed in the cache", fs.readdirSync(path.join(folder, "cache")).join(", "));
+      // The copy is made once.
+      const made = fromCopy ? fs.statSync(cached(0)).mtimeMs : 0;
+      startupIndex(data).db.close();
+      expect(!fromCopy || fs.statSync(cached(0)).mtimeMs === made, "the copy of the bundled index was made a second time", fs.readdirSync(path.join(folder, "cache")).join(", "));
+      // An index an earlier run downloaded is served when it is newer, and nothing older stays.
+      download(DAY);
+      const newer = startupIndex(data);
+      const served = path.resolve(newer.dir);
+      newer.db.close();
+      expect(served === path.resolve(cached(DAY)), "a downloaded index newer than the bundled one is not served", served);
+      expect(
+        fs.readdirSync(path.join(folder, "cache")).join(",") === path.basename(cached(DAY)),
+        "indexes older than the one in use stayed in the cache",
+        fs.readdirSync(path.join(folder, "cache")).join(", "),
+      );
+      return fromCopy ? "served from the copy" : "no copy on this platform";
+    } finally {
+      if (was === undefined) delete process.env.HACKTRICKS_CACHE_DIR;
+      else process.env.HACKTRICKS_CACHE_DIR = was;
+      fs.rmSync(folder, { recursive: true, force: true });
+    }
   });
 
   await client.close();
