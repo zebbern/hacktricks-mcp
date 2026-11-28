@@ -11,9 +11,11 @@ const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), ".."
 const text = (result: any) => (result.content as { text?: string }[]).map((c) => c.text ?? "").join("\n");
 
 async function main() {
+  // The executable itself (package.json "bin"), which checks the Node.js
+  // version and then starts the server.
   const transport = new StdioClientTransport({
     command: process.execPath,
-    args: [path.join(PKG_ROOT, "dist", "server.js")],
+    args: [path.join(PKG_ROOT, "dist", "main.js")],
     stderr: "pipe",
     // Pass the full environment: the SDK's default filtered env drops vars
     // like ELECTRON_RUN_AS_NODE that some Node runtimes need. The background

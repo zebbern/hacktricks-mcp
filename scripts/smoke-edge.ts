@@ -12,7 +12,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { cleanMarkdown, extractCodeBlocks, extractOutline, extractSection, findHeading, withoutFootnotes } from "../src/markdown.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -62,6 +62,41 @@ async function start(env: Record<string, string>) {
 }
 
 async function main() {
+  // On a Node.js without node:sqlite the executable used to die with a stack
+  // trace about a missing built-in module, naming neither the package nor the
+  // Node.js it needs. A preload makes the running Node.js report an older
+  // version, since the oldest supported one is not at hand.
+  await check("a Node.js that is too old is told what the executable needs", async () => {
+    const folder = fs.mkdtempSync(path.join(os.tmpdir(), "hacktricks-smoke-edge-"));
+    const preload = path.join(folder, "old-node.mjs");
+    fs.writeFileSync(preload, 'Object.defineProperty(process.versions, "node", { value: "20.11.1" });\n');
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: ["--import", pathToFileURL(preload).href, path.join(PKG_ROOT, "dist", "main.js")],
+      stderr: "pipe",
+      env: { ...process.env, HACKTRICKS_OFFLINE: "1" } as Record<string, string>,
+    });
+    let stderr = "";
+    transport.stderr?.on("data", (d: Buffer) => {
+      stderr += d.toString();
+    });
+    const client = new Client({ name: "smoke-edge", version: "0.0.1" });
+    const connected = await Promise.race([
+      client.connect(transport).then(
+        () => true,
+        () => false,
+      ),
+      new Promise<true>((resolve) => setTimeout(() => resolve(true), 10_000)),
+    ]);
+    if (connected) await client.close().catch(() => {});
+    fs.rmSync(folder, { recursive: true, force: true });
+    expect(
+      !connected && /hacktricks-mcp needs Node.js 22\.13 or newer, and this is Node\.js 20\.11\.1\. Update Node\.js and start again\./.test(stderr),
+      "an old Node.js is not told what the executable needs",
+      stderr.slice(0, 400),
+    );
+  });
+
   // Blank settings mean "not set": the server starts on the bundled index.
   await check("blank environment settings are taken as unset", async () => {
     const blank = await start({ HACKTRICKS_DB: "", HACKTRICKS_INDEX_URL: "   ", HACKTRICKS_CACHE_DIR: "" });

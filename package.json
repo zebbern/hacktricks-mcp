@@ -5,7 +5,7 @@
   "description": "MCP server giving AI agents fast full-text search and section-level retrieval over the HackTricks security wiki and its Cloud book (AWS, Azure, GCP, Kubernetes, CI/CD), and a check of cloud permissions against the book's rated lists and escalation catalog. Ships with a pre-built index of both books, synced with upstream every 3 days and refreshed in the background.",
   "type": "module",
   "bin": {
-    "hacktricks-mcp": "dist/server.js"
+    "hacktricks-mcp": "dist/main.js"
   },
   "files": [
     "dist",
@@ -18,7 +18,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
+    "start": "node dist/main.js",
     "sync": "tsx scripts/sync.ts",
     "eval": "tsx scripts/eval.ts",
     "eval:workflow": "tsx scripts/eval-workflow.ts",
