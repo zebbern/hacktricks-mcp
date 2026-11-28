@@ -14,7 +14,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { BOOKS } from "./books.js";
-import { searchPages, getPage, listCategories, type PageRow } from "./db.js";
+import { getPage, searchPages, searchTerms, listCategories, MAX_TERMS, type PageRow } from "./db.js";
 import { extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
 import { checkPermissions, type EscalationMatch } from "./permission-check.js";
 import { PROVIDERS, SEVERITIES, type Severity } from "./permissions.js";
@@ -165,6 +165,7 @@ server.registerTool(
       query: z.string().min(1).describe("Search terms or a plain question, e.g. 'docker escape', 'aws s3 enumeration' or 'how do I escalate from the lxd group'"),
       category: z
         .string()
+        .max(MAX_CATEGORY)
         .optional()
         .describe("Optional: restrict to one category when the top hits are for the wrong one (substring match), e.g. 'Linux' or 'Windows'. hacktricks_get_toc lists them"),
       limit: z.number().int().min(1).max(25).default(10).describe("Max results (default 10)"),
@@ -185,15 +186,18 @@ server.registerTool(
       chars: h.chars,
       snippet: h.snippet.replace(/\n+/g, " ").trim(),
     }));
+    // A pasted page has more terms than are searched; say so rather than fail silently.
+    const terms = searchTerms(query).length;
+    const note = terms > MAX_TERMS ? `\n(Only the first ${MAX_TERMS} of ${terms} terms were searched.)` : "";
     const text =
       results.length === 0
-        ? `No HackTricks pages matched "${query}"${category ? ` in category "${category}"` : ""}. Try broader or different terms.`
+        ? `No HackTricks pages matched "${shown(query)}"${category ? ` in category "${shown(category)}"` : ""}. Try broader or different terms.${note}`
         : results
             .map(
               (r, i) =>
                 `${i + 1}. ${r.title}\n   book: ${r.book}\n   path: ${r.path}\n   category: ${r.category}\n   size: ${r.chars.toLocaleString("en-US")} chars\n   ${r.snippet}`,
             )
-            .join("\n\n");
+            .join("\n\n") + note;
     return { content: [{ type: "text", text }], structuredContent: { results } };
   },
 );

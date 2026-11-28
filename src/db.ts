@@ -209,16 +209,25 @@ export const STOPWORDS = new Set(
   ).split(" "),
 );
 
-/** Split a free-text query into the terms that carry meaning. */
-function queryTerms(query: string): string[] {
+/** Terms beyond this number are not searched: each costs a lookup, a question has a dozen and a pasted page has thousands. */
+export const MAX_TERMS = 32;
+
+/**
+ * The words of a free-text query, each once. Whitespace separates them, and so
+ * do the separators of a permission or of a path ("iam:PassRole", "a/b.md"),
+ * because that is how the index tokenizes pages: "iamPassRole" is in none.
+ */
+export function searchTerms(query: string): string[] {
   const all = query
-    .split(/\s+/)
-    .map((t) => t.replace(/[^\w.-]/g, ""))
+    .split(/[\s:/\\]+/)
+    .map((t) => t.replace(/[^\p{L}\p{N}._-]/gu, ""))
     .filter((t) => t.length > 0);
   // Short queries are already keywords, and every word may matter in them
   // ("use after free"). Filler only creeps into longer ones.
   const meaningful = all.length > 3 ? all.filter((t) => !STOPWORDS.has(t.toLowerCase())) : all;
-  return meaningful.length > 0 ? meaningful : all;
+  const kept = meaningful.length > 0 ? meaningful : all;
+  const seen = new Set<string>();
+  return kept.filter((t) => !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()));
 }
 
 const quote = (s: string) => `"${s.replace(/"/g, '""')}"`;
@@ -371,7 +380,8 @@ export function searchPages(
   // A term absent from the index can neither match nor say anything about a page.
   // Its rarity is judged as typed: "ssrf" stays specific even though its
   // expansion includes words as common as "server".
-  const terms = queryTerms(query)
+  const terms = searchTerms(query)
+    .slice(0, MAX_TERMS)
     .map((term) => {
       const own = pagesMatching(db, quote(term));
       return { term, pages: own > 0 ? own : pagesMatching(db, termExpr(term)) };
@@ -396,7 +406,7 @@ export function searchPages(
     const alias = ALIASES[term.toLowerCase()];
     const spellings = alias
       ? [term, ...alias.split(" ")].map((word) => [nameKey(word)])
-      : [term.split(/[^\w]+/).filter(Boolean).map(nameKey)];
+      : [term.split(/[^\p{L}\p{N}_]+/u).filter(Boolean).map(nameKey)];
     const weighted = spellings
       .map((words) => ({ words, naming: pagesNaming(db, words) }))
       .map((s) => ({ ...s, weight: s.naming > 0 ? Math.log((NAMING_RATE * total) / s.naming) : 0 }))
