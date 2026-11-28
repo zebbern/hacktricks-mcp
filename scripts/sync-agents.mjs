@@ -6,9 +6,12 @@
  *   kimi-plugin/agents/hacktricks-researcher.md   Kimi reads agents/ under the plugin root
  *   .codex/agents/hacktricks-researcher.toml     Codex reads TOML from .codex/agents/
  *
- * The prompt body is shared verbatim; only the envelope differs. Codex plugins
- * cannot bundle agents, so that file is there for users to copy into
- * ~/.codex/agents/ (see docs/agents.md).
+ * The prompt body is shared verbatim; only the envelope differs. Kimi has no
+ * model or color field and ignores unknown ones, and it cannot preload a
+ * skill, which the researcher no longer needs. Codex plugins cannot bundle
+ * agents and an agent file there cannot restrict tools, so that file states
+ * the limits in words and is there for users to copy into ~/.codex/agents/
+ * (see docs/agents.md).
  *
  * Usage:
  *   node scripts/sync-agents.mjs          # write mirrors
@@ -17,6 +20,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parse as parseYaml } from "yaml";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const NAME = "hacktricks-researcher";
@@ -27,31 +31,22 @@ const MARKER = (format) =>
 // Compare line endings as LF so the guard passes on Windows checkouts too.
 const normalize = (text) => text.replace(/\r\n/g, "\n");
 
-/** Split a Markdown file with flat `key: value` frontmatter into its fields and body. */
+/** The canonical file's frontmatter, parsed as the YAML it is, and its body. */
 function readCanonical() {
-  const lines = normalize(fs.readFileSync(CANONICAL, "utf8")).split("\n");
-  if (lines[0] !== "---") throw new Error(`${CANONICAL} must open with frontmatter`);
-  const end = lines.indexOf("---", 1);
-  const meta = {};
-  for (const line of lines.slice(1, end)) {
-    const m = /^([A-Za-z][\w-]*):\s*(.*)$/.exec(line);
-    if (m) meta[m[1]] = m[2];
-  }
-  const body = lines.slice(end + 1).join("\n").trim();
-  const tools = (meta.tools ?? "")
-    .replace(/^\[|\]$/g, "")
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-  return { name: meta.name, description: meta.description, tools, body };
+  const match = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(normalize(fs.readFileSync(CANONICAL, "utf8")));
+  if (!match) throw new Error(`${CANONICAL} must open with YAML frontmatter`);
+  // The description is a long quoted string with example blocks, so it is parsed, not read off the line.
+  const meta = parseYaml(match[1]);
+  return { name: meta.name, description: meta.description, tools: meta.tools, body: match[2].trim() };
 }
 
-const json = (s) => JSON.stringify(s);
+// A JSON string is also a valid YAML double-quoted scalar and a valid TOML basic string.
+const quoted = (s) => JSON.stringify(s);
 
 const kimi = ({ name, description, body }) => `---
 name: ${name}
-description: ${description}
-whenToUse: HackTricks lookups that need several pages.
+description: ${quoted(description)}
+whenToUse: HackTricks questions that need several pages.
 disallowedTools:
 - Write
 - Edit
@@ -68,19 +63,15 @@ ${body}
 const codex = ({ name, description, body }) => {
   if (body.includes("'''")) throw new Error("The researcher body now contains ''' and no longer fits a TOML literal string");
   return `# ${MARKER("Codex")}
-name = ${json(name)}
-description = ${json(description)}
+name = ${quoted(name)}
+description = ${quoted(description)}
 developer_instructions = '''
-You inherit the caller's tools. Use only the HackTricks MCP tools (hacktricks_search, hacktricks_get_page, hacktricks_get_toc, hacktricks_cloud_permissions) and what you need to load the skill. Do not edit files.
+You inherit the caller's tools. Use only the HackTricks MCP tools (hacktricks_search, hacktricks_get_page, hacktricks_get_toc, hacktricks_cloud_permissions). Do not edit files.
 
 ${body}
 '''
 `;
 };
-
-// Kimi agents carry their tools in the frontmatter, so the body is enough there.
-// Codex agent files cannot restrict tools or preload skills, which is why that
-// envelope says so in words.
 const MIRRORS = [
   { file: path.join(ROOT, "kimi-plugin", "agents", `${NAME}.md`), render: kimi },
   { file: path.join(ROOT, ".codex", "agents", `${NAME}.toml`), render: codex },

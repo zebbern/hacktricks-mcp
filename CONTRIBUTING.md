@@ -12,9 +12,9 @@ Thanks for improving hacktricks-mcp. This project has a few structural invariant
 - `kimi-plugin/skills/hacktricks/SKILL.md` is a generated copy (Kimi plugins install as self-contained directories). Never edit it by hand. Run `npm run sync:skills` after touching the canonical file. CI fails on drift. The mirror list is `MIRRORS` in `scripts/sync-skills.mjs`; add a host there only if its plugin cannot reach the repo root.
 - The `description` frontmatter is the trigger that decides whether agents load the skill. Treat it as a public API: specific, keyword-rich, under 1024 chars.
 
-The same holds for the researcher subagent, which is built on the skill rather than beside it:
+The same discipline holds for the researcher subagent, which is written to stand on its own:
 
-- `agents/hacktricks-researcher.md` is the canonical researcher, in the format Claude Code and ZCode share. It loads the skill by name and must never copy it. Keep its report format in step with the skill's delegation section.
+- `agents/hacktricks-researcher.md` is the canonical researcher, in the format Claude Code and ZCode share: frontmatter of `name`, `description` with triggering examples, `model`, `color` and `tools`, then the prompt. It carries the lookup route in its own prompt and does not load the skill, so a change to the route in one of the two has to be made in the other as well. Keep its report format in step with the skill's delegation section.
 - `kimi-plugin/agents/hacktricks-researcher.md` and `.codex/agents/hacktricks-researcher.toml` are generated from it in the Kimi and Codex formats. Never edit them by hand. Run `npm run sync:agents` after touching the canonical file. CI fails on drift.
 - `claude plugin validate` does not read skill or subagent files, so its pass says nothing about them. Check their frontmatter against the host's own documentation when you change it.
 
