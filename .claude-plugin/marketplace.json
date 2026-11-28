@@ -1,13 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-plugin-marketplace.json",
   "name": "hacktricks-mcp",
-  "description": "HackTricks lookup for AI agents: an offline search MCP server over the HackTricks and HackTricks Cloud books, plus a skill that teaches efficient use.",
+  "description": "HackTricks lookup for AI agents: an offline search MCP server over the HackTricks and HackTricks Cloud books, with a skill and a researcher subagent that teach efficient use.",
   "owner": {
     "name": "zebbern"
   },
   "plugins": [
     {
       "name": "hacktricks",
+      "displayName": "HackTricks",
       "source": "./",
       "description": "Offline full-text search and section-level retrieval over the HackTricks offensive-security wiki and HackTricks Cloud (AWS, GCP, Azure, Kubernetes, CI/CD), plus a cloud permissions check. Synced every 3 days.",
       "version": "0.2.0",

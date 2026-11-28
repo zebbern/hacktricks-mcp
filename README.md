@@ -37,7 +37,7 @@ codex mcp add hacktricks -- npx -y @zebbern/hacktricks-mcp@latest
 
 - Claude Code: `/plugin install hacktricks --marketplace zebbern/hacktricks-mcp`
 - Codex CLI: `codex plugin marketplace add zebbern/hacktricks-mcp`, then `codex plugin add hacktricks --marketplace hacktricks-mcp`
-- ZCode: add `zebbern/hacktricks-mcp` as a plugin marketplace, then install `hacktricks`
+- ZCode: **Settings > Plugins > Add > Add plugin marketplace**, enter `zebbern/hacktricks-mcp`, then install `hacktricks` from the **Personal** tab
 - Kimi Work: use [this plugin link](kimi-work://plugin?id=hacktricks)
 
 The researcher subagent comes with the plugin on Claude Code, ZCode and Kimi. Codex plugins cannot bundle subagents, so on Codex copy its definition once:
