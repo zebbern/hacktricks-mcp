@@ -23,7 +23,7 @@
     "eval": "tsx scripts/eval.ts",
     "eval:workflow": "tsx scripts/eval-workflow.ts",
     "eval:permissions": "tsx scripts/eval-permissions.ts",
-    "smoke": "tsx scripts/smoke.ts",
+    "smoke": "tsx scripts/smoke.ts && tsx scripts/smoke-edge.ts",
     "smoke:refresh": "tsx scripts/smoke-refresh.ts",
     "sync:skills": "node scripts/sync-skills.mjs",
     "sync:agents": "node scripts/sync-agents.mjs",
