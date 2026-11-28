@@ -43,3 +43,7 @@ jobs:
 
       - name: Verify the permissions check
         run: npm run eval:permissions
+
+      # Not a gate: it prints the sizes the README quotes, so they stay current.
+      - name: Print what a read costs
+        run: npm run cost

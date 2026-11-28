@@ -4,6 +4,19 @@ MCP server that gives AI agents fast, offline full-text search and section-level
 
 Unlike grep-based alternatives, this server ships with a **pre-built SQLite FTS5 search index** (about 2,950 pages) inside the package. No install-time clone, no ripgrep dependency, and no network access at any query. A GitHub Action re-syncs the index with upstream **every 3 days** and publishes a patch release to npm, so an unpinned install picks up each new index on its next launch. A running server also checks for a newer index in the background and switches to it when there is one, falling back to the bundled index whenever that fails (offline included).
 
+## What a read costs
+
+Pages are long, so the tools return the part that answers. Tokens are as the `o200k_base` tokenizer counts them (other tokenizers differ by a few percent), measured across the index and, for the search, on 89 questions:
+
+| Read | Tokens | Characters |
+|---|---|---|
+| A search, five hits | about 545 | about 2,000 |
+| A page's outline | about 180 | about 690 |
+| One section of a page | about 300 | about 1,300 |
+| A whole page | about 1,950 | about 8,400 |
+
+A page is about six times that section. `npm run cost` prints the character counts for the current index; how these are measured is in [docs/development.md](docs/development.md#what-a-read-costs).
+
 ## Quick start
 
 Requirements: Node.js 22.13 or newer, also when a client starts servers with its own copy of Node.js (the server uses the built-in `node:sqlite`, zero native dependencies).
