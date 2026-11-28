@@ -1,28 +1,89 @@
 /**
  * Markdown cleaning and section utilities for HackTricks content.
  *
- * HackTricks pages are GitBook-flavored markdown full of templating noise:
- * `{% hint %}...{% endhint %}` training banners, `{{#include}}` directives,
- * `.gitbook/assets` image lines. All of that wastes agent tokens, so we strip
- * it at index time.
+ * HackTricks pages are GitBook-flavored markdown with templating and markup on
+ * top: the `{{#include}}` of the training banner, `{{#ref}}` link scaffolding,
+ * `{{#tab}}` groups, `{% hint %}` callouts, HTML comments. That is removed at
+ * index time, and only outside code blocks: the pages on injection hold
+ * `{{ ... }}`, `{% ... %}` and `<!-- -->` that look exactly like it and are
+ * payloads. What a template carried stays, such as a tab's label and a
+ * warning's text.
  */
 
-/** Remove GitBook/mdBook templating noise and collapse whitespace. */
+/** What a GitBook hint style is called, in the words the book's own callouts use. */
+const HINT_LABELS: Record<string, string> = {
+  info: "Note",
+  note: "Note",
+  success: "Tip",
+  tip: "Tip",
+  warning: "Warning",
+  danger: "Caution",
+  caution: "Caution",
+};
+
+/** HackTricks templating that stands on a line of its own and carries nothing to keep. */
+const SCAFFOLDING_LINE = /^\s*(\{\{#(tabs|endtabs|endtab|file|endfile)\b[^}]*\}\}|\{%\s*(embed|endembed)\b[^%]*%\})\s*$/;
+const TAB_LINE = /^\s*\{\{#tab\s+name\s*=\s*["']([^"']*)["']\s*\}\}\s*$/;
+/** A badge of GitBook's own assets, alone on its line. */
+const BADGE_LINE = /^\s*!\[[^\]]*\]\([^)]*\.gitbook\/assets[^)]*\)\s*$/;
+
+/** Clean one stretch of a page that lies outside code blocks. */
+function cleanProse(lines: string[]): string[] {
+  // HTML comments, which start a line: the wiki does not show them either.
+  // One written inside a line, or inside code, is content (the XML pages hold `<!--`).
+  const text = lines.join("\n").replace(/^[ \t]*<!--[\s\S]*?-->[ \t]*$/gm, "");
+  const kept: string[] = [];
+  for (const line of text.split("\n")) {
+    if (SCAFFOLDING_LINE.test(line) || BADGE_LINE.test(line)) continue;
+    const tab = TAB_LINE.exec(line);
+    if (tab) {
+      kept.push(`**${tab[1].trim()}**`);
+      continue;
+    }
+    const plain = line.replace(/\{\{#include[^}]*\}\}/g, "").replaceAll("{{#ref}}", "").replaceAll("{{#endref}}", "");
+    // A heading that only held the training banner is no heading.
+    if (/^\s*#+\s*$/.test(plain)) continue;
+    kept.push(plain);
+  }
+  return kept;
+}
+
 export function cleanMarkdown(raw: string): string {
-  let text = raw;
+  // A hint block is a callout. Keep what it says, led by the word the book's
+  // other callouts use, except for the training advertisement, which was
+  // written as a hint once.
+  let text = raw.replace(/\{%\s*hint([^%]*)%\}([\s\S]*?)\{%\s*endhint\s*%\}/g, (_block, attributes: string, body: string) => {
+    if (/hacktricks\s+training/i.test(body)) return "";
+    const style = (attributes.match(/style\s*=\s*["']?([a-z]+)/) ?? [])[1];
+    const lines = body
+      .split("\n")
+      .filter((line) => !/\{\{#include/.test(line))
+      .map((line) => line.trimEnd());
+    while (lines.length > 0 && !lines[0].trim()) lines.shift();
+    while (lines.length > 0 && !lines[lines.length - 1].trim()) lines.pop();
+    if (lines.length === 0) return "";
+    return [`**${HINT_LABELS[style] ?? "Note"}.** ${lines[0].trim()}`, ...lines.slice(1)].join("\n");
+  });
 
-  // Drop {% hint ... %} ... {% endhint %} blocks (HackTricks training ads)
-  text = text.replace(/\{%\s*hint[^%]*%\}[\s\S]*?\{%\s*endhint\s*%\}/g, "");
-
-  // Drop remaining single-line GitBook directives: {% ... %}, {{#include ...}}
-  text = text.replace(/^\s*\{%[\s\S]*?%\}\s*$/gm, "");
-  text = text.replace(/^\s*\{\{[\s\S]*?\}\}\s*$/gm, "");
-
-  // Drop image-only lines pointing at .gitbook/assets (banner badges)
-  text = text.replace(/^\s*!\[[^\]]*\]\([^)]*\.gitbook\/assets[^)]*\)\s*$/gm, "");
-
-  // Drop HTML comments
-  text = text.replace(/<!--[\s\S]*?-->/g, "");
+  // Code blocks are passed on untouched, one line as they are; the stretches
+  // between them are cleaned.
+  const kept: string[] = [];
+  let prose: string[] = [];
+  let inCode = false;
+  const cleanTheRest = () => {
+    kept.push(...cleanProse(prose));
+    prose = [];
+  };
+  for (const line of text.split("\n")) {
+    if (/^\s*```/.test(line)) {
+      cleanTheRest();
+      kept.push(line);
+      inCode = !inCode;
+    } else if (inCode) kept.push(line);
+    else prose.push(line);
+  }
+  cleanTheRest();
+  text = kept.join("\n");
 
   // Collapse 3+ blank lines, trim trailing spaces
   text = text.replace(/[ \t]+$/gm, "");

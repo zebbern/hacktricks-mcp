@@ -3,6 +3,7 @@
  * pasted text, oversized fields, malformed permissions and blank environment
  * settings. Each once made the built server answer with something wrong or
  * unreadable, so the answer is asserted on here. The rules are in docs/tools.md.
+ * The last check is on the page cleaner, which once deleted payloads.
  *
  * Every check runs even after one fails, and the test fails if any did.
  */
@@ -12,6 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { cleanMarkdown } from "../src/markdown.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER = path.join(PKG_ROOT, "dist", "server.js");
@@ -189,6 +191,59 @@ async function main() {
       const refused = await call(name, args);
       expect(refused.isError && text(refused).includes(`at most ${limit}`) && text(refused).length < 2_000, `${name} took a field of tens of thousands of characters`, text(refused).slice(0, 300));
     }
+  });
+
+  // The cleaner once took the pages on injection for templating: it removed
+  // `{% ... %}` and `{{ ... }}` lines, and everything from a `<!--` to the next
+  // `-->`, inside code blocks too. The polyglot cheatsheet was left with 927 of
+  // its 10,277 characters. First on a page with every construct, then on the
+  // built index.
+  await check("the cleaner keeps payloads, warnings and tab labels, and removes only scaffolding", async () => {
+    const cleaned = cleanMarkdown(
+      [
+        "{{#include ../banners/hacktricks-training.md}}",
+        '{% hint style="warning" %}',
+        "Do not use this on a network you do not own.",
+        "{{#include ../banners/hacktricks-training.md}}",
+        "{% endhint %}",
+        "{{#tabs}}",
+        '{{#tab name="vol3"}}',
+        "```bash",
+        "{% debug %}",
+        "{{7*7}}",
+        "```",
+        "{{#endtab}}",
+        '{{#tab name="vol2"}}',
+        "```bash",
+        "vol.py --profile=Win7SP1x86",
+        "```",
+        "{{#endtabs}}",
+        "See [fast bin attack]({{#ref}}fast-bin-attack.md{{#endref}}) and {{7*7}}[7*7].",
+        "```xml",
+        "<!DOCTYPE a [ <!NOTATION b SYSTEM 'c'> ]><!-- d -->",
+        "```",
+        "<!-- a comment -->",
+        "- Insert `<!--x-->` before the value.",
+        "",
+      ].join("\n"),
+    );
+    const kept = [
+      "**Warning.** Do not use this on a network you do not own.",
+      "**vol3**",
+      "**vol2**",
+      "{% debug %}",
+      "{{7*7}}",
+      "[fast bin attack](fast-bin-attack.md)",
+      "{{7*7}}[7*7]",
+      "<!DOCTYPE a [ <!NOTATION b SYSTEM 'c'> ]><!-- d -->",
+      "Insert `<!--x-->` before the value.",
+    ];
+    const gone = ["{{#include", "{{#tab", "{{#tabs}}", "{{#ref}}", "{% hint", "a comment -->"];
+    for (const s of kept) expect(cleaned.includes(s), `the cleaner dropped ${JSON.stringify(s)}`, cleaned);
+    for (const s of gone) expect(!cleaned.includes(s), `the cleaner left the scaffolding ${JSON.stringify(s)} in the page`, cleaned);
+    // Upstream has 32 sections on this page; 4 were left when the cleaner took its payloads for templating.
+    const cheatsheet = await call(P, { path: "pentesting-web/pocs-and-polygloths-cheatsheet/README.md", outlineOnly: true });
+    expect((cheatsheet.structuredContent?.outline ?? []).length >= 28, "the polyglot cheatsheet has lost sections", text(cheatsheet).slice(0, 600));
   });
 
   await client.close();

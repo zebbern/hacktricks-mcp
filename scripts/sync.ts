@@ -82,8 +82,66 @@ function pageTitle(content: string, fallback: string): string {
  */
 const REDIRECT_MAX_CHARS = 2000;
 
-/** Index every page of one book into the shared database. Returns its SUMMARY.md tree and page count. */
-function indexBook(book: Book, srcDir: string, db: DatabaseSync): { tree: TocNode[]; indexed: number } {
+/**
+ * What cleaning took out of a page that it never may. The cleaner removes
+ * scaffolding only, so a heading outside code blocks, a code fence and a line
+ * of prose holding a template expression (a payload, on the pages about
+ * injection) must survive it. Nothing checked that until 2026-11-28, when the
+ * cleaner was found to have taken 176 payload lines off 15 pages and the body
+ * of the polyglot cheatsheet.
+ */
+function takenByCleaning(raw: string, cleaned: string): string[] {
+  const lines = (text: string) => text.split("\n");
+  const isFence = (line: string) => /^\s*```/.test(line);
+  const headingText = (line: string) => line.replace(/^#+\s+/, "").replace(/\{\{#include[^}]*\}\}/, "").replace(/[*_`]/g, "").trim();
+  const headingsOutsideCode = (text: string) => {
+    const counts = new Map<string, number>();
+    let inCode = false;
+    for (const line of lines(text)) {
+      if (isFence(line)) inCode = !inCode;
+      else if (!inCode && /^#{1,6}\s+/.test(line)) {
+        const heading = headingText(line);
+        if (heading) counts.set(heading, (counts.get(heading) ?? 0) + 1);
+      }
+    }
+    return counts;
+  };
+
+  const problems: string[] = [];
+  const fencesLost = lines(raw).filter(isFence).length - lines(cleaned).filter(isFence).length;
+  if (fencesLost !== 0) problems.push(`${Math.abs(fencesLost)} code fence marker(s)`);
+
+  const kept = lines(cleaned).map((line) => line.trim());
+  const headingsKept = headingsOutsideCode(cleaned);
+  let headingsLost = 0;
+  for (const [heading, count] of headingsOutsideCode(raw)) headingsLost += Math.max(0, count - (headingsKept.get(heading) ?? 0));
+  if (headingsLost > 0) problems.push(`${headingsLost} heading(s)`);
+
+  const lostPayloads: string[] = [];
+  let inCode = false;
+  let inComment = false;
+  for (const line of lines(raw)) {
+    if (isFence(line)) inCode = !inCode;
+    if (inCode) continue;
+    // A comment that starts a line is removed on purpose, whatever it holds.
+    if (inComment) {
+      if (line.includes("-->")) inComment = false;
+      continue;
+    }
+    if (/^[ \t]*<!--/.test(line)) {
+      if (!line.includes("-->")) inComment = true;
+      continue;
+    }
+    if (!/(\{\{|\{%|<!--)/.test(line) || /^\s*(\{\{#|\{%\s*(hint|endhint|embed|endembed))/.test(line)) continue;
+    const probe = line.replace(/\{\{#include[^}]*\}\}/g, "").replaceAll("{{#ref}}", "").replaceAll("{{#endref}}", "").trim();
+    if (probe && !kept.some((keptLine) => keptLine.includes(probe))) lostPayloads.push(probe.slice(0, 80));
+  }
+  if (lostPayloads.length > 0) problems.push(`${lostPayloads.length} line(s) with a template expression, e.g. ${JSON.stringify(lostPayloads[0])}`);
+  return problems;
+}
+
+/** Index every page of one book into the shared database. Returns its SUMMARY.md tree, its page count and the pages cleaning damaged. */
+function indexBook(book: Book, srcDir: string, db: DatabaseSync): { tree: TocNode[]; indexed: number; damaged: string[] } {
   // Parse the table of contents
   const summary = fs.readFileSync(path.join(srcDir, "SUMMARY.md"), "utf8");
   const { tree, pages } = parseSummary(summary);
@@ -91,6 +149,7 @@ function indexBook(book: Book, srcDir: string, db: DatabaseSync): { tree: TocNod
 
   const files = walkMarkdown(srcDir).filter((f) => path.basename(f) !== "SUMMARY.md");
   const indexed = new Set<string>();
+  const damaged: string[] = [];
   for (const file of files) {
     const rel = path.relative(srcDir, file).split(path.sep).join("/");
     const raw = fs.readFileSync(file, "utf8");
@@ -99,6 +158,8 @@ function indexBook(book: Book, srcDir: string, db: DatabaseSync): { tree: TocNod
     const metaEntry = pages.get(rel);
     const title = metaEntry?.title ?? pageTitle(content, path.basename(rel, ".md"));
     if (/\(former URL\)\s*$/i.test(title) && content.length < REDIRECT_MAX_CHARS) continue;
+    const taken = takenByCleaning(raw, content);
+    if (taken.length > 0) damaged.push(`${rel}: ${taken.join(", ")}`);
     insertPage(db, {
       book: book.id,
       path: rel,
@@ -113,7 +174,7 @@ function indexBook(book: Book, srcDir: string, db: DatabaseSync): { tree: TocNod
     indexed.add(rel);
   }
   // The table of contents lists what the index holds, not what was skipped.
-  return { tree: pruneToc(tree, (node) => !node.path || indexed.has(node.path)), indexed: indexed.size };
+  return { tree: pruneToc(tree, (node) => !node.path || indexed.has(node.path)), indexed: indexed.size, damaged };
 }
 
 /**
@@ -167,6 +228,7 @@ async function main() {
     const db = createDb(tmpDb);
     const toc: Record<string, TocNode[]> = {};
     let indexed = 0;
+    const damaged: string[] = [];
     for (const book of BOOKS) {
       const sha = shas.get(book.id)!;
       const tarball = path.join(tmp, `${book.id}.tar.gz`);
@@ -179,11 +241,16 @@ async function main() {
       const result = indexBook(book, srcDir, db);
       toc[book.id] = result.tree;
       indexed += result.indexed;
+      damaged.push(...result.damaged);
       console.log(`${book.title}: indexed ${result.indexed} pages`);
       const techniques = indexPermissions(srcDir, db);
       if (techniques > 0) console.log(`${book.title}: indexed ${techniques} escalation techniques`);
     }
     db.close();
+    // An index that lost more than scaffolding is not written at all.
+    if (damaged.length > 0) {
+      throw new Error(`Cleaning took more than scaffolding out of ${damaged.length} page(s); see src/markdown.ts:\n  ${damaged.slice(0, 12).join("\n  ")}`);
+    }
 
     fs.mkdirSync(DATA_DIR, { recursive: true });
     fs.copyFileSync(tmpDb, DB_PATH);

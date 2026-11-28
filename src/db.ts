@@ -39,7 +39,7 @@ export interface SearchHit {
  * The sync script then rebuilds, and a server ignores indexes built for another
  * number (src/refresh.ts).
  */
-export const INDEX_SCHEMA = 3;
+export const INDEX_SCHEMA = 4;
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS pages (
