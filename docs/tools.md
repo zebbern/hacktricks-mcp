@@ -58,7 +58,7 @@ Reads one page from the index.
 | `path` | string | required | Page path from search, e.g. `windows-hardening/active-directory-methodology/kerberoast.md`. Unique suffixes like `kerberoast` also work. |
 | `book` | string | main book wins | `hacktricks` or `hacktricks-cloud`. Only `README.md` and `banners/hacktricks-training.md` exist in both books; use it to pick one of those. |
 | `outlineOnly` | boolean | false | Return the headings with the size of each section and no content. Use it to choose a section before reading. Takes precedence over `section` and `codeOnly`. |
-| `section` | string | none | Extract one section by heading text (case-insensitive substring match) |
+| `section` | string | none | Extract one section by heading text (case-insensitive substring match; marks for code style and emphasis are ignored, so a heading printed without its backticks still matches) |
 | `codeOnly` | boolean | false | Return only fenced code blocks (commands and payloads) |
 | `offset` | integer | 0 | Skip this many characters of the page or section. A cut response ends with the offset where the rest continues. |
 

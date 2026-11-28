@@ -161,6 +161,22 @@ async function main() {
   const pointed = techniques[0];
   const section = await client.callTool({ name: "hacktricks_get_page", arguments: { path: pointed.page, section: pointed.section } });
   if ((section as any).isError || (section as any).structuredContent?.content.length < 40) throw new Error("the section the check points to is not readable");
+  // Every section it points to must be readable exactly as printed. Headings of
+  // the Cloud book carry code style between their permissions ("`iam:PassRole`,
+  // `lambda:CreateFunction`"), which the check leaves out when it prints them.
+  const passRole = await client.callTool({ name: "hacktricks_cloud_permissions", arguments: { provider: "aws", permissions: ["iam:PassRole"] } });
+  const pointedOnes = [
+    ...(passRole as any).structuredContent?.escalation ?? [],
+    ...(passRole as any).structuredContent?.sections ?? [],
+  ];
+  if (pointedOnes.length < 10) throw new Error("the check for iam:PassRole points to too few sections to test");
+  const unreadable = [];
+  for (const t of pointedOnes) {
+    if (!t.section && !t.heading) continue;
+    const part = await client.callTool({ name: "hacktricks_get_page", arguments: { path: t.page, section: t.section ?? t.heading } });
+    if ((part as any).isError || (part as any).structuredContent?.content.length < 40) unreadable.push(`${t.page} "${t.section ?? t.heading}"`);
+  }
+  if (unreadable.length) throw new Error(`sections the check points to are not readable as printed:\n${unreadable.join("\n")}`);
   const badGrant = await client.callTool({ name: "hacktricks_cloud_permissions", arguments: { provider: "k8s", permissions: ["create"] } });
   if (!(badGrant as any).isError || !text(badGrant).includes("verb resource")) throw new Error("a grant that is not written as expected was accepted");
   console.log("cloud permissions OK");

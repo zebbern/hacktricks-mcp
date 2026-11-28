@@ -53,16 +53,24 @@ export function extractOutline(content: string): Heading[] {
   return headings;
 }
 
+/** A heading as a reader sees it: without the marks that only give code style or emphasis. */
+const withoutMarks = (text: string) => text.replace(/[`*_~]/g, "");
+
 /**
  * Extract one section by heading text (case-insensitive substring match).
  * Returns the section from its heading until the next heading of the same or
  * higher level, or null if no heading matches.
+ *
+ * Marks for code style and emphasis do not count on either side. HackTricks
+ * writes permission headings as "`iam:PassRole`, `lambda:CreateFunction`", and
+ * a caller naming that section without the backticks, as the permissions check
+ * does, must still find it.
  */
 export function extractSection(content: string, section: string): string | null {
   const lines = content.split("\n");
   const headings = extractOutline(content);
-  const needle = section.toLowerCase();
-  const match = headings.find((h) => h.text.toLowerCase().includes(needle));
+  const needle = withoutMarks(section).toLowerCase();
+  const match = headings.find((h) => withoutMarks(h.text).toLowerCase().includes(needle));
   if (!match) return null;
 
   let end = lines.length;
