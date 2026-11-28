@@ -51,7 +51,7 @@ npm run sync                 # build the index from both books
 npm run build && npm run eval && npm run eval:workflow && npm run eval:permissions && npm run smoke && npm run smoke:refresh
 ```
 
-Add an eval fixture in `tests/queries.json` when you add or change search behavior, and a case in `tests/permissions.json` when you change the permissions check. See [docs/development.md](docs/development.md) for details.
+Add an eval fixture in `tests/queries.json` when you add or change search behavior, and a case in `tests/permissions.json` when you change the permissions check. When you fix an input the server answered wrongly, add a check for it to `scripts/smoke-edge.ts` ([docs/development.md](docs/development.md#edge-cases)). See [docs/development.md](docs/development.md) for details.
 
 ## Releasing (maintainers)
 

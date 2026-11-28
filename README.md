@@ -77,7 +77,7 @@ All tools are strictly read-only. Full reference: [docs/tools.md](docs/tools.md)
 | `HACKTRICKS_CACHE_DIR` | Where downloaded indexes are kept |
 | `HACKTRICKS_DB` | Serve the database at this path; the background check stays off |
 
-How the refresh works and how it fails safely: [docs/architecture.md](docs/architecture.md#runtime-index-refresh).
+An empty or blank variable counts as unset. How the refresh works and how it fails safely: [docs/architecture.md](docs/architecture.md#runtime-index-refresh).
 
 ## Documentation
 

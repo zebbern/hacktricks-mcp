@@ -191,6 +191,8 @@ The cache is `%LOCALAPPDATA%\hacktricks-mcp\cache` on Windows, `~/Library/Caches
 | `HACKTRICKS_CACHE_DIR` | Where downloaded indexes are kept |
 | `HACKTRICKS_DB` | Path of a database to serve; an explicit choice of index, so the refresh stays off |
 
+An empty or blank variable counts as unset, as a host's config form may leave it. The index is opened before the server answers its first message: one that is missing or not a database stops the start with one line on stderr that says which file and what to do. A damaged download in the cache is logged and skipped, and the bundled index is served.
+
 Node's built-in `fetch` does not read `HTTP_PROXY` on its own. Behind such a proxy the check fails, the server logs that on stderr and the bundled index stays in use.
 
 `release.yml` attaches all three files of `data/` to every release for this. After the npm publish it removes them from every older release, in a step that is allowed to fail: running servers only ever download the latest one, so GitHub holds a single copy of the index and not one per release. `scripts/smoke-refresh.ts` plays each row of the table above against a local stand-in for the releases.
@@ -203,12 +205,14 @@ Three evals run in CI, in the sync workflow and in the release workflow, and all
 - `scripts/eval-workflow.ts` plays the route the skill gives an agent (the permissions check for a question that names permissions, a search with the technique's name, with the question as typed, then listing the topic) for the 89 questions in `tests/scenarios.json`, each asked two ways. It fails when the route finds the page for less than 90% of the questions, asked either way. See [development.md](development.md#evaluating-quality).
 - `scripts/eval-permissions.ts` proves the permissions check against the catalog itself (every technique that names permissions is listed from exactly those, and a plain conjunction is not listed without one of them) and against the hand-checked cases in `tests/permissions.json`.
 
+Two end-to-end tests run in the same places, `npm run smoke`: `scripts/smoke.ts` calls the four tools over stdio against the built server, and `scripts/smoke-edge.ts` sends the inputs from outside the happy path listed in [tools.md](tools.md#input-limits) and the page lookup rules. Each of its checks failed on 0.3.0.
+
 ## Design choices and why
 
-- **Pre-built index over live fetching**: answers in about 100 to 160 ms, works offline, never hits GitHub rate limits at query time.
+- **Pre-built index over live fetching**: a call answers in a few milliseconds and a long one in under 100 ms (measured end to end over stdio on one development machine, locally and through `npx`), works offline, never hits GitHub rate limits at query time.
 - **node:sqlite over better-sqlite3**: zero native compilation, so `npx` works on any machine with Node 22.13+.
 - **FTS5 over ripgrep**: ranked relevance (BM25 plus title credit) instead of raw match lines, and no external binary to install. Ripgrep was weighed again when the Cloud book was added and adds nothing here: the index already holds the text, and ranking is what decides whether an agent finds the page.
 - **One index for both books over one index per book**: most questions do not say which book answers them (`privilege escalation`, `docker`, `github actions`), and one search must cover both. The `book` column costs nothing and lets a caller narrow by book.
-- **A dedicated check for cloud permissions over search**: a question such as "what can I do with `iam:PassRole` and `lambda:CreateFunction`" is a lookup in data the book keeps in structured form, not a text search. The plain search finds the page for 1 of the 6 permission questions in the evaluation; the check finds all 6, with the page section to read.
+- **A dedicated check for cloud permissions over search**: a question such as "what can I do with `iam:PassRole` and `lambda:CreateFunction`" asks for data the book keeps in structured form: the rating of each permission and the techniques they enable. In the evaluation the check finds the page for all 6 permission questions, with the section to read. The plain search has an expected page among its results for all 6 as well and reads less, so the check earns its first place by what it adds, which the pages do not hold in one place.
 - **Tarball over git clone in sync**: two HTTP requests, no history, no auth.
 - **Committing `data/`**: makes the repo self-contained; cloning gives you a working server immediately, and the npm package ships the same bytes.

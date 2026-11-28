@@ -21,7 +21,7 @@ Requires Node.js 22.13 or newer.
 | `npm run eval` | Keyword gate: fixtures from `tests/queries.json` |
 | `npm run eval:workflow` | Agent gate: whether the skill's route finds the page for every scenario question (build first) |
 | `npm run eval:permissions` | Permissions gate: the permissions check against the whole catalog and against hand-checked cases |
-| `npm run smoke` | End-to-end MCP test over stdio against the built server |
+| `npm run smoke` | End-to-end MCP tests over stdio against the built server: the four tools (`scripts/smoke.ts`), then inputs from outside the happy path (`scripts/smoke-edge.ts`) |
 | `npm run smoke:refresh` | End-to-end test of the background index refresh (build first) |
 | `npm start` | Run the built server on stdio |
 
@@ -55,24 +55,24 @@ npm run eval:workflow -- --misses           # what the skill's route does not fi
 
 The steps are `hacktricks_cloud_permissions` for a question that names cloud permissions, a search with the question (`limit` 5), a search with the technique's name (the `named` form of the question), and `hacktricks_get_toc` with the cloud's word (`K8s`, `AWS - `) or with the rarest topic words of the question. A question is found when an expected page is among the results of a step. The last route of each table is what the skill tells agents to do; the run fails when that route finds the page for less than 90% of the questions, asked either way.
 
-Reference numbers, index of 2,952 pages at upstream `2856dd9` and `49dae14` (2026-11-28; the same pages found on the three main-book commits before it):
+Reference numbers, index of 2,952 pages at upstream `679550a` and `49dae14` (2026-11-28; the same numbers were measured on `2856dd9`). Calls and characters are averages over all 89 questions, so the permissions check, which answers 6 of them, comes to 5,038 characters a question. A query has been split at the separators of a permission or of a path since 0.3.2, which is how the pages are indexed; before that, with `iam:PassRole` searched as one word, the two "search only" rows found 80 and 48 of 89:
 
 | Route | Found | Calls | Characters read |
 |---|---|---|---|
 | The question names the technique: permissions check alone (6 of the 89 questions name permissions) | 6 of 89 | 0.08 | 345 |
-| The question names the technique: search only | 80 of 89 | 1.00 | 1,953 |
+| The question names the technique: search only | 85 of 89 | 1.00 | 1,966 |
 | The question names the technique: the skill's route | 89 of 89 | 1.06 | 2,461 |
 | The question only describes the situation: permissions check alone | 6 of 89 | 0.07 | 340 |
-| The question only describes the situation: search as typed only | 48 of 89 | 1.00 | 1,929 |
-| The same: as typed, then with the technique's name | 82 of 89 | 1.46 | 2,828 |
-| The same: name first, then as typed | 82 of 89 | 1.10 | 2,152 |
+| The question only describes the situation: search as typed only | 51 of 89 | 1.00 | 1,930 |
+| The same: as typed, then with the technique's name | 87 of 89 | 1.43 | 2,768 |
+| The same: name first, then as typed | 87 of 89 | 1.04 | 2,054 |
 | The same: the skill's route | 89 of 89 | 1.09 | 2,461 |
 
 What follows, and all of it is in the skill:
 
-- A single search for a question that only describes a situation is never the real outcome: it finds the page for 48 of 89. Naming the technique first reaches 82 with 1.10 calls, where typing the question first and adding the name on a miss needs 1.46.
-- The first hit is the right page for 64 of the 89 questions that name the technique (72%, a share the gate prints under its tables), and for a quarter of them when the question only describes the situation, so the titles below it still have to be read.
-- A question that names permissions is a lookup, not a search. The plain search finds the page for 1 of the 6 permission questions; the permissions check finds all 6, with the page section to read.
+- A single search for a question that only describes a situation is never the real outcome: it finds the page for 51 of 89. Naming the technique first reaches 87 with 1.04 calls, where typing the question first and adding the name on a miss needs 1.43.
+- The first hit is the right page for 79% of the questions that name the technique and for 26% of those that only describe the situation (shares the gate prints under its tables), so the titles below it still have to be read.
+- A question that names permissions has its page by both routes. The plain search has an expected page among its five results for all 6, first for 5, and reads 2,164 characters a question; the permissions check finds all 6 too, with the section to read, and reads 5,038 (21,108 for `iam:PassRole`, which enables 20 techniques). The check is the first call for what it adds, the rating of each permission and the techniques they enable, not because a search cannot find the page: before queries were split at the separators of a permission, the search found 1 of the 6.
 - One Kubernetes question ("How do I escalate privileges inside a Kubernetes cluster?") is not answered by a search and is found by listing the provider's pages (`K8s`, 56 entries). The harness counts a page that is in a listing as found, so there the agent still has to pick the right title.
 
 What the harness cannot see: whether a live agent names the technique as the scenario's `named` question does, and whether it picks the right title from a listing. Those steps are the agent's own, and only a live run shows them; the run of 2026-11-27 is recorded in [agents.md](agents.md).
@@ -107,6 +107,14 @@ To add a scenario, append to `tests/scenarios.json`:
 ```
 
 `expect` holds path suffixes, the best page first. Write `named` as a user who knows the term would, and `goal` without it. For Cloud pages use a suffix that ends the path (`aws-iam-privesc/README.md`), and check that the page really answers the question: `npm run eval:workflow -- --misses` lists what is not found. A permission question names the permissions as the cloud writes them, and its expected page is one the permissions check points to.
+
+## Edge cases
+
+`npm run smoke` runs two end-to-end tests against the built server. `scripts/smoke.ts` exercises the four tools. `scripts/smoke-edge.ts` sends what an agent or a host can send by mistake: a vague page path, a permission or a path where a keyword belongs, pasted text in one field, permissions glued into one entry, a blank environment setting. Each of its seven checks is a behaviour that 0.3.0 got wrong: run against 0.3.0, the file fails in all seven, and on the fixed build all seven pass. The rules it pins down are in [tools.md](tools.md).
+
+A wider battery was run once on 0.3.0 and once on the fix (2026-11-28): 377 calls, among them FTS syntax, other scripts, look-alike characters, a megabyte in one field, 200 wildcards and unknown tools, plus 24 conditions at startup. Neither run crashed, timed out or lost the connection. Two findings needed no fix. 300 calls sent at once are all answered in 1.0 to 1.7 seconds, the same few milliseconds each as one at a time. A reply is large only when `limit` asks for it (`hacktricks_cloud_permissions` with `*` and `limit` 100 is about 100,000 characters), and a pasted field is quoted in at most 120 characters.
+
+To add a check, put it in a `check(...)` block in `scripts/smoke-edge.ts`. Assert on what the answer says, not on counts that a new index would change.
 
 ## Releasing to npm
 

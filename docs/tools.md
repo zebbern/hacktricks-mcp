@@ -14,15 +14,15 @@ Ranked full-text search over the indexed pages of both books.
 
 | Name | Type | Default | Description |
 |---|---|---|---|
-| `query` | string | required | Technical terms or a plain question, e.g. `"kerberoast"`, `"aws s3 enumeration"` or `"how do I abuse unconstrained delegation"` |
-| `category` | string | none | Restrict to one category of the table of contents, substring match, e.g. `"Linux"` or `"Pentesting CI/CD"`. `hacktricks_get_toc` lists them. Only useful when the top hits are for the wrong platform. |
+| `query` | string | required | Technical terms or a plain question, e.g. `"kerberoast"`, `"aws s3 enumeration"` or `"how do I abuse unconstrained delegation"`. The first 32 terms are searched, and the answer says so when it had to leave some out. |
+| `category` | string | none | Restrict to one category of the table of contents, substring match, e.g. `"Linux"` or `"Pentesting CI/CD"`. `hacktricks_get_toc` lists them. Only useful when the top hits are for the wrong platform. At most 200 characters. |
 | `limit` | integer | 10 | Max results, 1 to 25 |
 
 **Ranking**
 
 A query can be a question in plain words; the engine finds the terms in it.
 
-1. Filler words are dropped from queries of more than three words, and abbreviations are expanded (see below).
+1. The query is cut into terms at whitespace and at the separators of a permission or of a path (`iam:PassRole`, `a/b.md`), because that is how the pages are indexed: `iamPassRole` is in none of them. Each term counts once. Filler words are dropped from queries of more than three words, and abbreviations are expanded (see below).
 2. Two candidate pools are taken by FTS5 BM25 (column weights: title 10, path 8, category 5, content 1, porter stemming): pages containing every *specific* term (one found in at most 20% of pages), and pages containing any term. A question often carries an incidental word that the best page does not use, so matching every word is not required.
 3. The pool is ranked by *name credit*, a likelihood ratio on how few pages name each query term in their title or path, plus a bonus for containing every specific term. That ranks the page named after the technique above hub pages that merely contain the words. Two rules keep the credit honest:
    - A term is matched in titles and paths by its stem, so `escalate` matches `escalation` and `privileges` matches `privilege`.
@@ -32,10 +32,22 @@ Measured on `tests/scenarios.json` (89 questions, each asked two ways; see [deve
 
 | Question | Right page after one search | Right page first | Right page after the route the skill gives |
 |---|---|---|---|
-| names the technique | 80 of 89 | 64 of 89 | 89 of 89 |
-| only describes the situation, searched as typed | 48 of 89 | 22 of 89 | 89 of 89 |
+| names the technique | 85 of 89 | 79% | 89 of 89 |
+| only describes the situation, searched as typed | 51 of 89 | 26% | 89 of 89 |
 
-The route the skill gives is: the permissions check for a question that names cloud permissions, otherwise a search with the technique's name, then with the question as typed, then listing the topic with `hacktricks_get_toc`. It reaches the same pages whichever way the question is asked, which is why the skill tells agents to name the technique first.
+The route the skill gives is: the permissions check for a question that names cloud permissions, otherwise a search with the technique's name, then with the question as typed, then listing the topic with `hacktricks_get_toc`. It reaches the same pages whichever way the question is asked, which is why the skill tells agents to name the technique first. "Right page first" is the share the gate prints under its tables.
+
+## Input limits
+
+| Field | Limit | Longer input |
+|---|---|---|
+| `hacktricks_get_page` `path` | 1,000 characters | Refused by the schema |
+| `hacktricks_search` `category` | 200 characters | Refused by the schema |
+| `hacktricks_cloud_permissions` `permissions`, each | 500 characters | Refused by the schema |
+| `hacktricks_search` `query` | 32 terms searched | Answered; the answer says how many terms were left out |
+| `hacktricks_get_page` `section`, `hacktricks_get_toc` `category` | none | Answered |
+
+A path, a category and a permission are short by nature, so a longer one is pasted text and is refused with a message that names the limit. A query may be a pasted page and is searched, not echoed: when an answer quotes an input, it quotes at most 120 characters and gives the length.
 
 **Abbreviations**
 
@@ -55,7 +67,7 @@ Reads one page from the index.
 
 | Name | Type | Default | Description |
 |---|---|---|---|
-| `path` | string | required | Page path from search, e.g. `windows-hardening/active-directory-methodology/kerberoast.md`. Unique suffixes like `kerberoast` also work. |
+| `path` | string | required | Page path from search, e.g. `windows-hardening/active-directory-methodology/kerberoast.md`. The ending of a path (`ntlm/README.md`) and a file name without `.md` (`kerberoast`) also work. When several pages share what is passed, the tool names them instead of guessing (see below). At most 1,000 characters. |
 | `book` | string | main book wins | `hacktricks` or `hacktricks-cloud`. Only `README.md` and `banners/hacktricks-training.md` exist in both books; use it to pick one of those. |
 | `outlineOnly` | boolean | false | Return the headings with the size of each section and no content. Use it to choose a section before reading. Takes precedence over `section` and `codeOnly`. |
 | `section` | string | none | Extract one section by heading text (case-insensitive substring match; marks for code style and emphasis are ignored, so a heading printed without its backticks still matches) |
@@ -68,6 +80,7 @@ Reads one page from the index.
 - `outlineOnly` is the cheap first read for a long page: about 800 characters for the median page and under 1,800 for nine pages in ten, against a median page of about 10,800 characters in the main book and 7,100 in the Cloud book. Each heading carries the length of its section, cut the way `section` cuts it, and a heading whose section is mostly subsections says so (`24,716 chars in 19 subsections`).
 - Without `section`, returns the full cleaned page. Text comes in slices of 20,000 characters: a slice that is cut appends the heading outline, so the caller can pick a section, and ends with `offset=<n>` for the rest. A section without subsections that is longer than 20,000 characters is read the same way, slice by slice.
 - Unknown `section` returns an error listing the available headings, so the agent can self-correct.
+- A path is matched as it is, then as the whole ending of a path (with or without `.md`), then as a piece that exactly one page has. A piece that several pages have is not read as one of them. `"kerberos"` lies in six paths, so the answer is an error that lists them, each once, with the number of all; a piece that lies in at least half of the paths (`"e"`) names none, and the answer says how common it is. A path that names no page says so.
 - Content is pre-cleaned at index time: GitBook hint banners, include directives and badge images are removed.
 
 **Returns** (structured): `title`, `book`, `path`, `url`, `wikiUrl`, `outline`, `content`, `truncated`, `nextOffset` (where a cut text continues; absent when everything was returned).
@@ -97,7 +110,7 @@ Checks cloud permissions against HackTricks Cloud: how dangerous each permission
 | Name | Type | Default | Description |
 |---|---|---|---|
 | `provider` | string | required | `aws`, `gcp`, `azure` or `k8s` |
-| `permissions` | string[] | required | The permissions held, as the cloud writes them: `iam:PassRole`, `iam.serviceAccounts.actAs`, `Microsoft.Authorization/roleAssignments/write`, `Application.ReadWrite.All`. Wildcards as in a policy (`iam:*`, `s3:Get*`). 1 to 200 entries. |
+| `permissions` | string[] | required | The permissions held, as the cloud writes them: `iam:PassRole`, `iam.serviceAccounts.actAs`, `Microsoft.Authorization/roleAssignments/write`, `Application.ReadWrite.All`. Wildcards as in a policy: `*` for any run of characters (`iam:*`, `s3:Get*`) and `?` for one. 1 to 200 entries, each at most 500 characters. Several permissions pasted into one entry (`iam:PassRole, lambda:CreateFunction`) are rated each. |
 | `limit` | integer | 20 | How many escalation techniques to list at most, 1 to 100. The total is always reported. |
 
 For Kubernetes, write one grant per entry as `verb resource[.group][/subresource]`, `verb *` or `verb /url`: `create pods`, `get secrets`, `create deployments.apps`, `create pods/exec`, `get *`, `impersonate users`. A resource written without its group matches any group. Anything else is refused with the expected form.
@@ -114,12 +127,12 @@ For Kubernetes, write one grant per entry as `verb resource[.group][/subresource
 
 **Returns** (structured):
 
-- `risk[]`: `permission`, `severity`, and `note` (what a wildcard matches, or the rule a Kubernetes grant trips).
-- `combinations[]`: `severity`, `permissions`.
+- `risk[]`: `permission`, `severity`, and `note` (what a wildcard matches, or the rule a Kubernetes grant trips). A permission given twice is rated once.
+- `combinations[]`: `severity`, `permissions`. The 25 most severe at most; `combinationsTotal` says how many are held.
 - `escalation[]`: `id`, `service`, `title`, `summary`, `severity`, `confidence`, `needs`, `gains`, `conditions`, `blockers`, `mitigation`, `page`, `section`. `page` and `section` are the arguments for `hacktricks_get_page`.
-- `escalationTotal`, `notEvaluated`, `sections[]` (`permission`, `page`, `heading`).
+- `escalationTotal`, `combinationsTotal`, `notEvaluated`, `sections[]` (`permission`, `page`, `heading`).
 
-A call costs about 1,000 to 3,000 characters when a few techniques apply and about 19,000 for a permission such as `iam:PassRole` that enables dozens.
+A call costs about 1,000 to 3,000 characters when a few techniques apply and about 19,000 for a permission such as `iam:PassRole` that enables dozens. The size follows `limit`: `*` reads 26,653 characters with the default 20 techniques and about 100,000 with 100, so raise `limit` only when asked for every technique.
 
 ## Recommended agent workflow
 
