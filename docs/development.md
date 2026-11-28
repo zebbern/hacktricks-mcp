@@ -160,6 +160,7 @@ The gates run inside the repository on CI's Node version, so they miss two thing
 
 - **The packed package.** Run `npm run sync` first, then install the tarball somewhere else and start it from another folder. A package that looked for its index next to the working directory would fail here and pass everywhere else.
 - **The oldest Node that `engines` allows.** Run the gates and both smoke tests once on Node 22.13 or a later 22.x.
+- **A change to the sync workflow.** CI does not run `sync.yml`. After merging a change to it, start it by hand (`gh workflow run sync.yml --ref main`) and read its steps until the end. On 2026-11-28 such a run stopped at a step that wrote a file of seven lines into a step output, which takes one line; CI had been green.
 
 ```bash
 npm pack --pack-destination /tmp/ht-pack
