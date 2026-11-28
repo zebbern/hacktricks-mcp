@@ -21,12 +21,16 @@ scripts/sync.ts
   8. write data/{hacktricks.db, toc.json, meta.json, upstream.json}
         |
         v
+dist/main.js (the executable, package.json "bin")
+  says which Node.js it needs when the one running it is too old (src/main.ts)
 dist/server.js (MCP stdio server)
   reads data/hacktricks.db read-only at startup
   swaps in a newer index from the releases in the background (src/refresh.ts)
 ```
 
 The books are listed in `src/books.ts`: id, title, GitHub repository and public site. The indexer, the server and the refresh all read that table, so adding a book is one entry.
+
+`dist/main.js` is what `bin` points at and what every install path starts. It imports nothing that needs `node:sqlite`, so that on a Node.js older than 22.13 it can say what to do instead of dying with a stack trace about a missing built-in module. `scripts/smoke.ts` starts the executable; the other tests start `dist/server.js` directly.
 
 ## Data files
 

@@ -57,6 +57,14 @@ Then ask things like:
 - *"List every HackTricks page about AWS IAM"*
 - *"Is `iam:CreatePolicyVersion` dangerous? What can I do with `iam:PassRole` and `lambda:CreateFunction`?"*
 
+## If the server does not start
+
+The host's log shows why. Three causes lie outside the package, and each has a one-line fix:
+
+- **`hacktricks-mcp needs Node.js 22.13 or newer`**: update Node.js and start the host again. On a Node.js that old the executable says so itself.
+- **`npm error code ENOENT`** on a path under `_npx`: the npx cache holds a broken entry, usually from an install that was cut short. Delete the `_npx` folder in npm's cache (`%LOCALAPPDATA%\npm-cache\_npx` on Windows, `~/.npm/_npx` elsewhere) and start again; the package is downloaded once more.
+- **`'hacktricks-mcp' is not recognized`**: the server was started with the package named without `@latest`, from inside a clone of this repository, where npx runs the local copy. Use the install line from the quick start.
+
 ## Tools at a glance
 
 | Tool | What it does |
