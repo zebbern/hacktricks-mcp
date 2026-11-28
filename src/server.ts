@@ -15,7 +15,7 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { BOOKS } from "./books.js";
 import { lookupPage, searchPages, searchTerms, listCategories, MAX_TERMS, type PageLookup, type PageRow } from "./db.js";
-import { extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
+import { findHeading, sectionText, extractCodeBlocks, withoutFootnotes, plainText, sectionLengths, type CodeBlock, type Heading } from "./markdown.js";
 import { checkPermissions, type EscalationMatch } from "./permission-check.js";
 import { PROVIDERS, SEVERITIES, type Severity } from "./permissions.js";
 import { newestCachedIndex, openIndex, refreshInBackground, type Index } from "./refresh.js";
@@ -90,7 +90,10 @@ const READONLY = {
 } as const;
 
 /** The first line of a page: its title and where a human can read it online (the source link for pages the wiki does not publish). */
-const pageHeader = (page: PageRow) => `# ${page.title}\n${page.wiki || page.url}\n\n`;
+const pageHeader = (page: PageRow) => `# ${withoutFootnotes(page.title)}\n${page.wiki || page.url}\n\n`;
+
+/** One code block as the tool prints it: its label when the page gives one, then the fence with its language. */
+const printCodeBlock = (block: CodeBlock) => `${block.label ? `**${block.label}**\n` : ""}\`\`\`${block.language}\n${block.code}\n\`\`\``;
 
 /** Why a path named no page, and what to do about it. */
 function noPage(found: Exclude<PageLookup, { kind: "page" }>, input: string): string {
@@ -120,7 +123,7 @@ function pageOutline(page: PageRow, headings: Heading[]) {
       if (next.level === h.level + 1) subsections++;
     }
     const extent = subsections > 0 ? `${size(sizes[i])} chars in ${subsections} subsections` : `${size(sizes[i])} chars`;
-    return `${"  ".repeat(h.level - 1)}${h.text} (${extent})`;
+    return `${"  ".repeat(h.level - 1)}${withoutFootnotes(h.text)} (${extent})`;
   });
   const summary =
     headings.length === 0
@@ -129,7 +132,7 @@ function pageOutline(page: PageRow, headings: Heading[]) {
   return {
     content: [{ type: "text" as const, text: pageHeader(page) + `${summary}\n\n${outline.join("\n")}` }],
     structuredContent: {
-      title: page.title,
+      title: withoutFootnotes(page.title),
       book: page.book,
       path: page.path,
       url: page.url,
@@ -190,7 +193,7 @@ server.registerTool(
       pageId: h.page_id,
       book: h.book,
       path: h.path,
-      title: h.title,
+      title: withoutFootnotes(h.title),
       category: h.category,
       url: h.url,
       wikiUrl: h.wiki,
@@ -237,11 +240,11 @@ server.registerTool(
       section: z
         .string()
         .optional()
-        .describe("Optional heading name to extract just that section (case-insensitive substring match)"),
+        .describe("Optional heading name to extract just that section. A heading with exactly that text is preferred, else the first whose text contains it; marks, footnote links and double spaces do not count. The answer says when several sections share the name."),
       codeOnly: z
         .boolean()
         .default(false)
-        .describe("If true, return only fenced code blocks (commands/payloads) from the page or section"),
+        .describe("If true, return only the fenced code blocks (commands/payloads) of the page or section, each with its language and the label above it when the page gives one"),
       offset: z
         .number()
         .int()
@@ -271,30 +274,34 @@ server.registerTool(
 
     const headings = JSON.parse(page.outline) as Heading[];
     if (outlineOnly) return pageOutline(page, headings);
-    const outline = headings.map((h) => `${"  ".repeat(h.level - 1)}${h.text}`);
+    const outline = headings.map((h) => `${"  ".repeat(h.level - 1)}${withoutFootnotes(h.text)}`);
 
     let content: string;
+    // When a name does not pick one section out, say which one was read.
+    let note = "";
     if (section) {
-      const sec = extractSection(page.content, section);
-      if (sec === null) {
+      const match = findHeading(headings, section);
+      if (!match.heading) {
         return {
           content: [
             {
               type: "text",
-              text: `Section "${shown(section)}" not found in "${page.title}". Available sections:\n${outline.join("\n")}`,
+              text: `Section "${shown(section)}" not found in "${withoutFootnotes(page.title)}". Available sections:\n${outline.join("\n")}`,
             },
           ],
           isError: true,
         };
       }
-      content = sec;
+      content = sectionText(page.content, match.heading, headings);
+      if (match.sameName > 0) note = `(${count(match.sameName + 1)} sections of this page are named "${shown(plainText(match.heading.text))}"; this is the first.)`;
+      else if (!match.exact) note = `(no section is named exactly "${shown(plainText(section))}"; this is the first whose name contains it.)`;
     } else {
       content = page.content;
     }
 
     if (codeOnly) {
       const blocks = extractCodeBlocks(content);
-      content = blocks.length > 0 ? blocks.map((b) => "```\n" + b + "\n```").join("\n\n") : "(no code blocks found)";
+      content = blocks.length > 0 ? blocks.map(printCodeBlock).join("\n\n") : "(no code blocks found)";
     }
 
     // A long text comes in slices of MAX characters, and a slice that is cut
@@ -317,9 +324,9 @@ server.registerTool(
     }
 
     return {
-      content: [{ type: "text", text: pageHeader(page) + content }],
+      content: [{ type: "text", text: pageHeader(page) + (note ? `${note}\n\n` : "") + content }],
       structuredContent: {
-        title: page.title,
+        title: withoutFootnotes(page.title),
         book: page.book,
         path: page.path,
         url: page.url,

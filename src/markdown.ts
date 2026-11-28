@@ -114,38 +114,70 @@ export function extractOutline(content: string): Heading[] {
   return headings;
 }
 
-/** A heading as a reader sees it: without the marks that only give code style or emphasis. */
-const withoutMarks = (text: string) => text.replace(/[`*_~]/g, "");
+/** A heading or title as it is shown: without the footnote links that hang off many of them. */
+export const withoutFootnotes = (text: string) => text.replace(/<sup>[\s\S]*?<\/sup>/gi, "").replace(/\s+/g, " ").trim();
 
 /**
- * Extract one section by heading text (case-insensitive substring match).
- * Returns the section from its heading until the next heading of the same or
- * higher level, or null if no heading matches.
- *
- * Marks for code style and emphasis do not count on either side. HackTricks
- * writes permission headings as "`iam:PassRole`, `lambda:CreateFunction`", and
- * a caller naming that section without the backticks, as the permissions check
- * does, must still find it.
+ * A heading as a reader sees it and as a request for a section names it:
+ * without footnote links, without marks for code style and emphasis, with
+ * single spaces, in one case. HackTricks writes permission headings as
+ * "`iam:PassRole`, `lambda:CreateFunction`", a caller names them without the
+ * backticks, and the permissions check prints them with single spaces.
  */
-export function extractSection(content: string, section: string): string | null {
-  const lines = content.split("\n");
-  const headings = extractOutline(content);
-  const needle = withoutMarks(section).toLowerCase();
-  const match = headings.find((h) => withoutMarks(h.text).toLowerCase().includes(needle));
-  if (!match) return null;
+export const plainText = (text: string) => withoutFootnotes(text).replace(/[`*_~]/g, "").toLowerCase();
 
+/** Which heading a request for a section names. */
+export interface SectionMatch {
+  heading: Heading | null;
+  /** How many other headings of the page have exactly the text asked for. */
+  sameName: number;
+  /** Whether a heading has exactly the text asked for. If not, the first whose text contains it was taken. */
+  exact: boolean;
+}
+
+/**
+ * The heading a request names: one with exactly that text if there is one,
+ * else the first whose text contains it.
+ *
+ * The exact match comes first because the first heading that contains the
+ * text was often the wrong one: a page titled "Deep Learning
+ * <sup>[[1]](#references)</sup>" answered a request for its "References"
+ * section with the whole page, and a request for "usage" returned an earlier
+ * "usage of the tool". On the index of 2026-11-28 that hid 1,802 headings.
+ */
+export function findHeading(headings: Heading[], section: string): SectionMatch {
+  const needle = plainText(section);
+  const matches = (exact: boolean) =>
+    needle ? headings.filter((h) => (exact ? plainText(h.text) === needle : plainText(h.text).includes(needle))) : [];
+  const exact = matches(true);
+  if (exact.length > 0) return { heading: exact[0], sameName: exact.length - 1, exact: true };
+  const partial = matches(false);
+  // Headings that only contain the text do not share a name.
+  return partial.length > 0 ? { heading: partial[0], sameName: 0, exact: false } : { heading: null, sameName: 0, exact: false };
+}
+
+/** The text of a section: from its heading until the next heading of the same or higher level. */
+export function sectionText(content: string, heading: Heading, headings: Heading[] = extractOutline(content)): string {
+  const lines = content.split("\n");
   let end = lines.length;
   for (const h of headings) {
-    if (h.line > match.line && h.level <= match.level) {
+    if (h.line > heading.line && h.level <= heading.level) {
       end = h.line;
       break;
     }
   }
-  return lines.slice(match.line, end).join("\n").trim();
+  return lines.slice(heading.line, end).join("\n").trim();
+}
+
+/** Extract one section by heading text; findHeading says which heading a name picks. Null if none matches. */
+export function extractSection(content: string, section: string): string | null {
+  const headings = extractOutline(content);
+  const { heading } = findHeading(headings, section);
+  return heading ? sectionText(content, heading, headings) : null;
 }
 
 /**
- * Length in characters of each heading's section, cut the way extractSection
+ * Length in characters of each heading's section, cut the way sectionText
  * cuts it: from the heading to the next one of the same or higher level. Lets
  * a caller pick a section before reading any of the page.
  */
@@ -157,14 +189,38 @@ export function sectionLengths(content: string, outline: Heading[]): number[] {
   });
 }
 
-/** Extract only fenced code blocks (commands/payloads) from a document. */
-export function extractCodeBlocks(content: string): string[] {
-  const blocks: string[] = [];
-  const re = /```[^\n]*\n([\s\S]*?)```/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(content)) !== null) {
-    const block = m[1].trim();
-    if (block) blocks.push(block);
+export interface CodeBlock {
+  /** The word after the opening fence, when there is one: the language. */
+  language: string;
+  code: string;
+  /** A line that is only a bold label right above the fence. The cleaner turns the name of a tab into one. */
+  label?: string;
+}
+
+/**
+ * The fenced code blocks (commands and payloads) of a document, each with the
+ * word after its fence and with the label above it when there is one, so that
+ * the blocks of two tabs can be told apart.
+ */
+export function extractCodeBlocks(content: string): CodeBlock[] {
+  const lines = content.split("\n");
+  const blocks: CodeBlock[] = [];
+  const isFence = (line: string) => /^\s*```/.test(line);
+  for (let i = 0; i < lines.length; i++) {
+    const open = /^\s*```\s*(\S*)/.exec(lines[i]);
+    if (!open) continue;
+    let end = i + 1;
+    while (end < lines.length && !isFence(lines[end])) end++;
+    if (end < lines.length) {
+      const code = lines.slice(i + 1, end).join("\n").trim();
+      if (code) {
+        let above = i - 1;
+        while (above >= 0 && !lines[above].trim()) above--;
+        const label = above >= 0 ? /^\s*\*\*([^*\n]+)\*\*\s*$/.exec(lines[above]) : null;
+        blocks.push({ language: open[1].replace(/[^\w+-].*$/, "").toLowerCase(), code, ...(label ? { label: label[1].trim() } : {}) });
+      }
+    }
+    i = end;
   }
   return blocks;
 }

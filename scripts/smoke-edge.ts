@@ -13,7 +13,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { cleanMarkdown } from "../src/markdown.js";
+import { cleanMarkdown, extractCodeBlocks, extractOutline, extractSection, findHeading, withoutFootnotes } from "../src/markdown.js";
 
 const PKG_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SERVER = path.join(PKG_ROOT, "dist", "server.js");
@@ -244,6 +244,38 @@ async function main() {
     // Upstream has 32 sections on this page; 4 were left when the cleaner took its payloads for templating.
     const cheatsheet = await call(P, { path: "pentesting-web/pocs-and-polygloths-cheatsheet/README.md", outlineOnly: true });
     expect((cheatsheet.structuredContent?.outline ?? []).length >= 28, "the polyglot cheatsheet has lost sections", text(cheatsheet).slice(0, 600));
+  });
+
+  // A section used to be the first heading whose text contained the name asked
+  // for: "References" on a page titled "Deep Learning <sup>[[1]](#references)</sup>"
+  // returned the whole page, and headings the permissions check prints with
+  // single spaces were not found when the page had two. Code blocks came back
+  // without the label of their tab and without their language.
+  await check("a section is found by its exact name first, and a name that fits several says so", async () => {
+    const page = ["# Deep Learning <sup>[[1]](#references)</sup>", "", "## Theory", "", "text of the theory", "", "## References", "", "- a source", "", "## Usage", "", "first", "", "## Usage", "", "second"].join("\n");
+    expect(extractSection(page, "references") === "## References\n\n- a source", "the References section is not found under a title that contains the word", String(extractSection(page, "references")));
+    expect(extractSection(page, "theory") === "## Theory\n\ntext of the theory", "a section is not found by its name in another case", String(extractSection(page, "theory")));
+    const spaced = "# Page\n\n## (`a` | `b`),  `c`\n\nbody\n";
+    expect(extractSection(spaced, "(a | b), c") === "## (`a` | `b`),  `c`\n\nbody", "marks and double spaces in a heading count against a name given without them", String(extractSection(spaced, "(a | b), c")));
+    const twice = findHeading(extractOutline(page), "usage");
+    expect(twice.heading?.text === "Usage" && twice.exact && twice.sameName === 1, "a name that two headings share does not say so", JSON.stringify(twice));
+    const partial = findHeading(extractOutline(page), "theor");
+    expect(partial.heading?.text === "Theory" && !partial.exact && partial.sameName === 0, "a name no heading has exactly is not told apart", JSON.stringify(partial));
+    expect(withoutFootnotes("Deep Learning <sup>[[1]](#references)</sup><sup>[[2]](#references)</sup>") === "Deep Learning", "footnote links are not dropped from a title", withoutFootnotes(page.split("\n")[0]));
+    const blocks = extractCodeBlocks(["**vol3**", "", "```Bash", "vol.py --version", "```", "", "text in between", "", "```", "plain", "```", "unclosed"].join("\n"));
+    expect(blocks.length === 2 && blocks[0].language === "bash" && blocks[0].label === "vol3" && blocks[1].code === "plain" && !blocks[1].label, "a code block loses its language or the label above it", JSON.stringify(blocks));
+
+    // Through the server: a name that fits no heading exactly is answered with a note, an exact one without.
+    const outline = await call(P, { path: KERBEROAST, outlineOnly: true });
+    const headings: string[] = outline.structuredContent?.outline ?? [];
+    const name = (headings[2] ?? headings[0]).replace(/\(\d[\d,]+ chars.*\)$/, "").trim();
+    const part = name.slice(0, 3).toLowerCase();
+    const noted = await call(P, { path: KERBEROAST, section: part });
+    expect(!noted.isError && text(noted).includes(`(no section is named exactly "${part}"`) && !text(noted).includes("sections of this page are named"), "a section read by a part of its name does not say so, or claims a shared name", text(noted).slice(0, 300));
+    const exact = await call(P, { path: KERBEROAST, section: name });
+    expect(!exact.isError && !text(exact).includes("(no section is named exactly"), "a section read by its exact name is treated as a partial one", text(exact).slice(0, 300));
+    const commands = await call(P, { path: "pentesting-web/pocs-and-polygloths-cheatsheet/README.md", codeOnly: true });
+    expect(!commands.isError && text(commands).includes("```bash\n"), "code blocks come back without their language", text(commands).slice(0, 300));
   });
 
   await client.close();
