@@ -505,22 +505,77 @@ function pagesMatching(db: DatabaseSync, expr: string): number {
     .n;
 }
 
+/** How a path asked for ended: one page, none, or a piece that lies in several paths, which the caller has to tell apart. */
+export type PageLookup =
+  | { kind: "page"; page: PageRow }
+  | { kind: "none" }
+  /** `matches` is empty when the piece lies in most pages (`pages` says how many there are): too common to choose from. */
+  | { kind: "several"; matches: string[]; total: number; pages: number };
+
+/** A text for a LIKE pattern: `%` is dropped and `_` and `\` lose their meaning. */
+const likeText = (s: string) => s.replace(/%/g, "").replace(/[\\_]/g, "\\$&");
+const CANDIDATES_SHOWN = 8;
+/** A piece of at least this share of all pages lists no paths: there is nothing to choose from. */
+const EVERYWHERE = 0.5;
+
 /**
  * Find a page by path. `book` settles the few paths that exist in both books
  * (README.md); without it the main book wins.
+ *
+ * 1. The path as it is.
+ * 2. A whole ending of a path ("ntlm/README.md"), also without its ".md".
+ * 3. A piece of a path ("kerberoast"), when exactly one page has it.
+ *
+ * Something vaguer is not read as one of them, so that the caller never gets a
+ * page it did not ask for. It gets the paths that share the piece when there
+ * are few enough to choose from ("kerberos" lies in six), and only the count
+ * when the piece lies in most paths ("e").
  */
-export function getPage(db: DatabaseSync, pagePath: string, book?: string): PageRow | null {
+export function lookupPage(db: DatabaseSync, pagePath: string, book?: string): PageLookup {
+  const input = pagePath.trim();
+  // Every path has a letter or a digit, so ".." or "___" names none.
+  if (!input || !/[\p{L}\p{N}]/u.test(input)) return { kind: "none" };
   const only = book ? "AND book = ?" : "";
   const scope = book ? [book] : [];
-  const exact = db
-    .prepare(`SELECT * FROM pages WHERE path = ? ${only} ORDER BY book LIMIT 1`)
-    .get(pagePath, ...scope) as unknown as PageRow | undefined;
-  if (exact) return exact;
-  // Convenience: allow suffix matches like "kerberoast" or "ntlm/README.md"
-  const like = db
-    .prepare(`SELECT * FROM pages WHERE path LIKE ? ${only} ORDER BY length(path), book LIMIT 1`)
-    .get(`%${pagePath.replace(/%/g, "")}%`, ...scope) as unknown as PageRow | undefined;
-  return like ?? null;
+  const page = (row: unknown) => ({ kind: "page", page: row as PageRow }) as PageLookup;
+
+  const exact = db.prepare(`SELECT * FROM pages WHERE path = ? ${only} ORDER BY book LIMIT 1`).get(input, ...scope);
+  if (exact) return page(exact);
+
+  const stem = input.replace(/\.md$/i, "");
+  if (stem) {
+    const ends = db
+      .prepare(
+        `SELECT * FROM pages
+         WHERE (path = ? OR path = ? OR path LIKE ? ESCAPE '\\' OR path LIKE ? ESCAPE '\\') ${only}
+         ORDER BY length(path), book LIMIT 2`,
+      )
+      .all(stem, `${stem}.md`, `%/${likeText(stem)}`, `%/${likeText(stem)}.md`, ...scope) as unknown as { path: string }[];
+    if (ends.length === 1) return page(ends[0]);
+    // "README" without its book means the book's own one, not a chapter's.
+    const topLevel = ends.filter((row) => !row.path.includes("/"));
+    if (topLevel.length > 0) return page(topLevel[0]);
+  }
+
+  // Paths, each once (README.md is in both books). count(*) over () is how many paths contain the piece, not only those listed.
+  const pieces = db
+    .prepare(
+      `SELECT path, count(*) OVER () AS total FROM (SELECT DISTINCT path FROM pages WHERE path LIKE ? ESCAPE '\\' ${only})
+       ORDER BY length(path), path LIMIT ?`,
+    )
+    .all(`%${likeText(input)}%`, ...scope, CANDIDATES_SHOWN + 1) as unknown as { path: string; total: number }[];
+  if (pieces.length === 0) return { kind: "none" };
+  if (pieces.length === 1) {
+    const row = db.prepare(`SELECT * FROM pages WHERE path = ? ${only} ORDER BY book LIMIT 1`).get(pieces[0].path, ...scope);
+    if (row) return page(row);
+  }
+  const pages = pageCount(db);
+  return {
+    kind: "several",
+    matches: pieces[0].total >= pages * EVERYWHERE ? [] : pieces.slice(0, CANDIDATES_SHOWN).map((row) => row.path),
+    total: pieces[0].total,
+    pages,
+  };
 }
 
 /** Page counts per book and category, in the order the table of contents lists them. */

@@ -14,7 +14,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { BOOKS } from "./books.js";
-import { getPage, searchPages, searchTerms, listCategories, MAX_TERMS, type PageRow } from "./db.js";
+import { lookupPage, searchPages, searchTerms, listCategories, MAX_TERMS, type PageLookup, type PageRow } from "./db.js";
 import { extractSection, extractCodeBlocks, sectionLengths, type Heading } from "./markdown.js";
 import { checkPermissions, type EscalationMatch } from "./permission-check.js";
 import { PROVIDERS, SEVERITIES, type Severity } from "./permissions.js";
@@ -91,6 +91,17 @@ const READONLY = {
 
 /** The first line of a page: its title and where a human can read it online (the source link for pages the wiki does not publish). */
 const pageHeader = (page: PageRow) => `# ${page.title}\n${page.wiki || page.url}\n\n`;
+
+/** Why a path named no page, and what to do about it. */
+function noPage(found: Exclude<PageLookup, { kind: "page" }>, input: string): string {
+  const asked = `"${shown(input)}"`;
+  if (found.kind === "none") return `No page found for ${asked}. Use hacktricks_search to find page paths.`;
+  if (found.matches.length === 0) {
+    return `${asked} lies in ${count(found.total)} of the ${count(found.pages)} page paths, so no page was read: it is too common to name one. Use hacktricks_search to find page paths.`;
+  }
+  const more = found.total > found.matches.length ? `\n  ... and ${count(found.total - found.matches.length)} more; hacktricks_search lists them.` : "";
+  return `${asked} lies in ${count(found.total)} page paths, so no page was read. Pass the path of one of them, or more of its ending:\n${found.matches.map((p) => `  ${p}`).join("\n")}${more}`;
+}
 
 /**
  * A page's headings with the size of each section and none of the content.
@@ -216,7 +227,8 @@ server.registerTool(
       path: z
         .string()
         .min(1)
-        .describe("Page path from hacktricks_search (e.g. 'windows-hardening/active-directory-methodology/kerberoast.md'). Unique suffixes like 'kerberoast' also work."),
+        .max(MAX_PATH)
+        .describe("Page path from hacktricks_search (e.g. 'windows-hardening/active-directory-methodology/kerberoast.md'). The ending of a path and a file name without .md also work ('kerberoast', 'ntlm/README.md'); when several pages share what you pass, the tool names them instead of guessing."),
       book: bookSchema.optional(),
       outlineOnly: z
         .boolean()
@@ -253,18 +265,9 @@ server.registerTool(
     annotations: READONLY,
   },
   async ({ path: pagePath, book, outlineOnly, section, codeOnly, offset }) => {
-    const page = getPage(index.db, pagePath, book);
-    if (!page) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `No page found for "${pagePath}". Use hacktricks_search to find valid page paths.`,
-          },
-        ],
-        isError: true,
-      };
-    }
+    const found = lookupPage(index.db, pagePath, book);
+    if (found.kind !== "page") return { content: [{ type: "text", text: noPage(found, pagePath.trim()) }], isError: true };
+    const page = found.page;
 
     const headings = JSON.parse(page.outline) as Heading[];
     if (outlineOnly) return pageOutline(page, headings);
